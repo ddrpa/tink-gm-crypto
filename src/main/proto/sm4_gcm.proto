@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package google.crypto.tink;
+
+option java_package = "cc.ddrpa.crypto.tink.proto";
+option java_multiple_files = true;
+option objc_class_prefix = "TINKPB";
+
+message Sm4GcmKeyFormat {
+  uint32 version = 1;
+}
+
+message Sm4GcmKey {
+  uint32 version = 1;
+  bytes key_value = 2;
+}
