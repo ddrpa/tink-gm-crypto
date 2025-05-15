@@ -1,10 +1,8 @@
-package cc.ddrpa.crypto.tink.aead.internal;
+package cc.ddrpa.crypto.tink.aead;
 
 import static com.google.common.truth.Truth.assertThat;
 import static org.junit.Assert.assertThrows;
 
-import cc.ddrpa.crypto.tink.aead.Sm4GcmKey;
-import cc.ddrpa.crypto.tink.aead.Sm4GcmParameters;
 import com.google.crypto.tink.subtle.Hex;
 import com.google.crypto.tink.util.Bytes;
 import com.google.crypto.tink.util.SecretBytes;
@@ -14,7 +12,7 @@ import org.junit.Test;
 public final class Sm4GcmKeyTest {
 
     @Test
-    void buildNoPrefixVariantAndGetProperties() throws Exception {
+    public void buildNoPrefixVariantAndGetProperties() throws Exception {
         Sm4GcmParameters parameters = Sm4GcmParameters.builder().setIvSizeBytes(16)
             .setTagSizeBytes(16).setVariant(Sm4GcmParameters.Variant.NO_PREFIX).build();
         assertThat(parameters.hasIdRequirement()).isFalse();
@@ -27,7 +25,7 @@ public final class Sm4GcmKeyTest {
     }
 
     @Test
-    void buildTinkVariantAndGetProperties() throws Exception {
+    public void buildTinkVariantAndGetProperties() throws Exception {
         Sm4GcmParameters parameters = Sm4GcmParameters.builder().setIvSizeBytes(16)
             .setTagSizeBytes(16).setVariant(Sm4GcmParameters.Variant.TINK).build();
         assertThat(parameters.hasIdRequirement()).isTrue();
@@ -41,18 +39,18 @@ public final class Sm4GcmKeyTest {
     }
 
     @Test
-    void emptyBuild_fails() {
+    public void emptyBuild_fails() {
         assertThrows(GeneralSecurityException.class, () -> Sm4GcmKey.builder().build());
     }
 
     @Test
-    void buildWithoutParameters_fails() {
+    public void buildWithoutParameters_fails() {
         assertThrows(GeneralSecurityException.class,
             () -> Sm4GcmKey.builder().setKeyBytes(SecretBytes.randomBytes(32)).build());
     }
 
     @Test
-    void buildWithoutKeyBytes_fails() throws Exception {
+    public void buildWithoutKeyBytes_fails() throws Exception {
         Sm4GcmParameters parameters = Sm4GcmParameters.builder().setIvSizeBytes(16)
             .setTagSizeBytes(16).setVariant(Sm4GcmParameters.Variant.NO_PREFIX).build();
         assertThrows(GeneralSecurityException.class,
@@ -60,7 +58,7 @@ public final class Sm4GcmKeyTest {
     }
 
     @Test
-    void paramtersRequireIdButIdIsNotSetInBuild_fails() throws Exception {
+    public void paramtersRequireIdButIdIsNotSetInBuild_fails() throws Exception {
         Sm4GcmParameters parametersWithIdRequirement = Sm4GcmParameters.builder().setIvSizeBytes(16)
             .setTagSizeBytes(16).setVariant(Sm4GcmParameters.Variant.TINK).build();
         assertThat(parametersWithIdRequirement.hasIdRequirement()).isTrue();

@@ -1,4 +1,4 @@
-package cc.ddrpa.crypto.tink.aead.internal;
+package cc.ddrpa.crypto.tink.aead;
 
 import static com.google.common.truth.Truth.assertThat;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -6,9 +6,6 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
-import cc.ddrpa.crypto.tink.aead.Sm4GcmKey;
-import cc.ddrpa.crypto.tink.aead.Sm4GcmKeyManager;
-import cc.ddrpa.crypto.tink.aead.Sm4GcmParameters;
 import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.InsecureSecretKeyAccess;
 import com.google.crypto.tink.Key;

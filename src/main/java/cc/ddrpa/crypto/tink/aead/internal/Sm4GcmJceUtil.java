@@ -34,7 +34,7 @@ public final class Sm4GcmJceUtil {
     }
 
     /**
-     * Returns a thread-local instance of the AES-GCM cipher.
+     * Returns a thread-local instance of the SM4-GCM cipher.
      */
     public static Cipher getThreadLocalCipher() {
         return localCipher.get();

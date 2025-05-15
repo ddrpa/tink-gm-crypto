@@ -42,7 +42,7 @@ public final class Sm4GcmJce implements Aead {
     private Sm4GcmJce(final byte[] key, Bytes outputPrefix) throws GeneralSecurityException {
         if (!FIPS.isCompatible()) {
             throw new GeneralSecurityException(
-                "Can not use AES-GCM in FIPS-mode, as BoringCrypto module is not available.");
+                "Can not use SM4-GCM in FIPS-mode, as BoringCrypto module is not available.");
         }
         this.keySpec = Sm4GcmJceUtil.getSecretKey(key);
         this.outputPrefix = outputPrefix.toByteArray();

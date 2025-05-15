@@ -85,7 +85,7 @@ public final class Sm4GcmProtoSerialization {
         if (parameters.getTagSizeBytes() != 16) {
             throw new GeneralSecurityException(
                 String.format(
-                    "Invalid tag size in bytes %d. Currently Tink only supports serialization of AES GCM"
+                    "Invalid tag size in bytes %d. Currently Tink only supports serialization of SM4 GCM"
                         + " keys with tag size equal to 16 bytes.",
                     parameters.getTagSizeBytes()));
         }
@@ -93,7 +93,7 @@ public final class Sm4GcmProtoSerialization {
         if (parameters.getIvSizeBytes() != 12) {
             throw new GeneralSecurityException(
                 String.format(
-                    "Invalid IV size in bytes %d. Currently Tink only supports serialization of AES GCM"
+                    "Invalid IV size in bytes %d. Currently Tink only supports serialization of SM4 GCM"
                         + " keys with IV size equal to 12 bytes.",
                     parameters.getIvSizeBytes()));
         }
