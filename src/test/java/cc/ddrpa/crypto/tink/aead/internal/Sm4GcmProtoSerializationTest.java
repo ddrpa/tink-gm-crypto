@@ -46,10 +46,10 @@ class Sm4GcmProtoSerializationTest {
         return Stream.of(
             // Unknown output prefix
             ProtoParametersSerialization.create(TYPE_URL, OutputPrefixType.UNKNOWN_PREFIX,
-                cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder().build()),
+                cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder().build()),
             // Bad version
             ProtoParametersSerialization.create(TYPE_URL, OutputPrefixType.RAW,
-                cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder().setVersion(1)
+                cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder().setVersion(1)
                     .build()));
     }
 
@@ -58,12 +58,12 @@ class Sm4GcmProtoSerializationTest {
             return Stream.of(
                 // Bad Version Number (1)
                 ProtoKeySerialization.create(TYPE_URL,
-                    cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey.newBuilder().setVersion(1)
+                    cc.ddrpa.crypto.tink.proto.Sm4GcmKey.newBuilder().setVersion(1)
                         .setKeyValue(KEY_BYTES_16_AS_BYTE_STRING).build().toByteString(),
                     KeyMaterialType.SYMMETRIC, OutputPrefixType.TINK, 1479),
                 // Unknown prefix
                 ProtoKeySerialization.create(TYPE_URL,
-                    cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey.newBuilder().setVersion(0)
+                    cc.ddrpa.crypto.tink.proto.Sm4GcmKey.newBuilder().setVersion(0)
                         .setKeyValue(KEY_BYTES_16_AS_BYTE_STRING).build().toByteString(),
                     KeyMaterialType.SYMMETRIC, OutputPrefixType.UNKNOWN_PREFIX, 1479));
         } catch (GeneralSecurityException e) {
@@ -85,11 +85,11 @@ class Sm4GcmProtoSerializationTest {
 
         ProtoParametersSerialization serialization = ProtoParametersSerialization.create(
             "type.googleapis.com/google.crypto.tink.Sm4GcmKey", OutputPrefixType.RAW,
-            cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder().build());
+            cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder().build());
 
         ProtoParametersSerialization serialized = registry.serializeParameters(parameters,
             ProtoParametersSerialization.class);
-        assertEqualWhenValueParsed(cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKeyFormat.parser(),
+        assertEqualWhenValueParsed(cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.parser(),
             serialized, serialization);
 
         Parameters parsed = registry.parseParameters(serialization);
@@ -103,11 +103,11 @@ class Sm4GcmProtoSerializationTest {
 
         ProtoParametersSerialization serialization = ProtoParametersSerialization.create(
             "type.googleapis.com/google.crypto.tink.Sm4GcmKey", OutputPrefixType.TINK,
-            cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder().build());
+            cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder().build());
 
         ProtoParametersSerialization serialized = registry.serializeParameters(parameters,
             ProtoParametersSerialization.class);
-        assertEqualWhenValueParsed(cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKeyFormat.parser(),
+        assertEqualWhenValueParsed(cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.parser(),
             serialized, serialization);
 
         Parameters parsed = registry.parseParameters(serialization);
@@ -142,7 +142,7 @@ class Sm4GcmProtoSerializationTest {
         Sm4GcmKey key = Sm4GcmKey.builder().setParameters(parameters).setKeyBytes(KEY_BYTES_16)
             .build();
 
-        cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey protoSm4GcmKey = cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey.newBuilder()
+        cc.ddrpa.crypto.tink.proto.Sm4GcmKey protoSm4GcmKey = cc.ddrpa.crypto.tink.proto.Sm4GcmKey.newBuilder()
             .setVersion(0).setKeyValue(KEY_BYTES_16_AS_BYTE_STRING).build();
 
         ProtoKeySerialization serialization = ProtoKeySerialization.create(
@@ -152,7 +152,7 @@ class Sm4GcmProtoSerializationTest {
 
         ProtoKeySerialization serialized = registry.serializeKey(key, ProtoKeySerialization.class,
             InsecureSecretKeyAccess.get());
-        assertEqualWhenValueParsed(cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey.parser(), serialized,
+        assertEqualWhenValueParsed(cc.ddrpa.crypto.tink.proto.Sm4GcmKey.parser(), serialized,
             serialization);
 
         Key parsed = registry.parseKey(serialization, InsecureSecretKeyAccess.get());
@@ -167,7 +167,7 @@ class Sm4GcmProtoSerializationTest {
         Sm4GcmKey key = Sm4GcmKey.builder().setParameters(parameters).setKeyBytes(KEY_BYTES_16)
             .setIdRequirement(123).build();
 
-        cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey protoSm4GcmKey = cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey.newBuilder()
+        cc.ddrpa.crypto.tink.proto.Sm4GcmKey protoSm4GcmKey = cc.ddrpa.crypto.tink.proto.Sm4GcmKey.newBuilder()
             .setVersion(0).setKeyValue(KEY_BYTES_16_AS_BYTE_STRING).build();
 
         ProtoKeySerialization serialization = ProtoKeySerialization.create(
@@ -177,7 +177,7 @@ class Sm4GcmProtoSerializationTest {
 
         ProtoKeySerialization serialized = registry.serializeKey(key, ProtoKeySerialization.class,
             InsecureSecretKeyAccess.get());
-        assertEqualWhenValueParsed(cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey.parser(), serialized,
+        assertEqualWhenValueParsed(cc.ddrpa.crypto.tink.proto.Sm4GcmKey.parser(), serialized,
             serialization);
 
         Key parsed = registry.parseKey(serialization, InsecureSecretKeyAccess.get());
@@ -186,7 +186,7 @@ class Sm4GcmProtoSerializationTest {
 
     @Test
     void testParseKeys_noAccess_throws() throws Exception {
-        cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey protoSm4GcmKey = cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey.newBuilder()
+        cc.ddrpa.crypto.tink.proto.Sm4GcmKey protoSm4GcmKey = cc.ddrpa.crypto.tink.proto.Sm4GcmKey.newBuilder()
             .setVersion(0).setKeyValue(KEY_BYTES_16_AS_BYTE_STRING).build();
         ProtoKeySerialization serialization = ProtoKeySerialization.create(
             "type.googleapis.com/google.crypto.tink.Sm4GcmKey", protoSm4GcmKey.toByteString(),

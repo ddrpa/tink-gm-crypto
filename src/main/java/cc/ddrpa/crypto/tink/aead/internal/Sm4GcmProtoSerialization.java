@@ -106,7 +106,7 @@ public final class Sm4GcmProtoSerialization {
             KeyTemplate.newBuilder()
                 .setTypeUrl(TYPE_URL)
                 .setValue(
-                    cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder()
+                    cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder()
                         .build()
                         .toByteString())
                 .setOutputPrefixType(toProtoOutputPrefixType(parameters.getVariant()))
@@ -119,7 +119,7 @@ public final class Sm4GcmProtoSerialization {
         validateParameters(key.getParameters());
         return ProtoKeySerialization.create(
             TYPE_URL,
-            cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey.newBuilder()
+            cc.ddrpa.crypto.tink.proto.Sm4GcmKey.newBuilder()
                 .setKeyValue(
                     ByteString.copyFrom(
                         key.getKeyBytes().toByteArray(SecretKeyAccess.requireAccess(access))))
@@ -137,10 +137,10 @@ public final class Sm4GcmProtoSerialization {
                 "Wrong type URL in call to Sm4GcmProtoSerialization.parseParameters: "
                     + serialization.getKeyTemplate().getTypeUrl());
         }
-        cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKeyFormat format;
+        cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat format;
         try {
             format =
-                cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKeyFormat.parseFrom(
+                cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.parseFrom(
                     serialization.getKeyTemplate().getValue(),
                     ExtensionRegistryLite.getEmptyRegistry());
         } catch (InvalidProtocolBufferException e) {
@@ -170,8 +170,8 @@ public final class Sm4GcmProtoSerialization {
                 "Wrong type URL in call to Sm4GcmProtoSerialization.parseKey");
         }
         try {
-            cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey protoKey =
-                cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey.parseFrom(
+            cc.ddrpa.crypto.tink.proto.Sm4GcmKey protoKey =
+                cc.ddrpa.crypto.tink.proto.Sm4GcmKey.parseFrom(
                     serialization.getValue(), ExtensionRegistryLite.getEmptyRegistry());
             if (protoKey.getVersion() != 0) {
                 throw new GeneralSecurityException("Only version 0 keys are accepted");

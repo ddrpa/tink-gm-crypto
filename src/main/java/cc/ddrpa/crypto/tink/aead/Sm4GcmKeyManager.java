@@ -40,7 +40,7 @@ public final class Sm4GcmKeyManager {
             getKeyType(),
             Aead.class,
             KeyMaterialType.SYMMETRIC,
-            cc.ddrpa.repack.crypto.tink.proto.Sm4GcmKey.parser());
+            cc.ddrpa.crypto.tink.proto.Sm4GcmKey.parser());
     @SuppressWarnings("InlineLambdaConstant") // We need a correct Object#equals in registration.
     private static final MutableKeyDerivationRegistry.InsecureKeyCreator<Sm4GcmParameters>
         KEY_DERIVER = Sm4GcmKeyManager::createSm4GcmKeyFromRandomness;
