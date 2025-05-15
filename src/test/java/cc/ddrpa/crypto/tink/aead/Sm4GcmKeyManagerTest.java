@@ -95,7 +95,7 @@ class Sm4GcmKeyManagerTest {
     void testKeyManagerRegistered() throws Exception {
         assertThat(
             KeyManagerRegistry.globalInstance()
-                .getKeyManager("type.googleapis.com/google.crypto.tink.Sm4GcmKey", Aead.class))
+                .getKeyManager("type.googleapis.com/ddrpa.crypto.tink.Sm4GcmKey", Aead.class))
             .isNotNull();
     }
 

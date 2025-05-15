@@ -32,7 +32,7 @@ import javax.annotation.Nullable;
 @SuppressWarnings("UnnecessarilyFullyQualified") // Fully specifying proto types is more readable
 public final class Sm4GcmProtoSerialization {
 
-    private static final String TYPE_URL = "type.googleapis.com/google.crypto.tink.Sm4GcmKey";
+    private static final String TYPE_URL = "type.googleapis.com/ddrpa.crypto.tink.Sm4GcmKey";
     private static final Bytes TYPE_URL_BYTES = toBytesFromPrintableAscii(TYPE_URL);
     private static final ParametersParser<ProtoParametersSerialization> PARAMETERS_PARSER =
         ParametersParser.create(

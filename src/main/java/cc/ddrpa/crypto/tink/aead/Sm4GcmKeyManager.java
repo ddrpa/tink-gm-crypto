@@ -61,7 +61,7 @@ public final class Sm4GcmKeyManager {
     }
 
     static String getKeyType() {
-        return "type.googleapis.com/google.crypto.tink.Sm4GcmKey";
+        return "type.googleapis.com/ddrpa.crypto.tink.Sm4GcmKey";
     }
 
     private static Map<String, Parameters> namedParameters() throws GeneralSecurityException {

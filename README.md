@@ -22,6 +22,13 @@ Sm4GcmKeyManager.register(true);
 
 参照 AES-GCM-HKDF 实现了 SM4-GCM-HKDF
 
+```
+"type.googleapis.com/ddrpa.crypto.tink.Sm4GcmHkdfStreamingKey";
+```
+
+计算方法
+
+
 ## 确定性 AEAD
 
 # 计划添加

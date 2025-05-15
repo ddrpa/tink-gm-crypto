@@ -1,0 +1,29 @@
+// Definitions for streaming encryption using SM4-GCM
+// with HKDF as key derivation function.
+syntax = "proto3";
+
+package google.crypto.tink;
+
+import "common.proto";
+
+option java_package = "cc.ddrpa.crypto.tink.proto";
+option java_multiple_files = true;
+
+message Sm4GcmHkdfStreamingParams {
+  uint32 ciphertext_segment_size = 1;
+  uint32 derived_key_size = 2;  // size of SM4-GCM keys derived for each segment
+  HashType hkdf_hash_type = 3;
+}
+
+message Sm4GcmHkdfStreamingKeyFormat {
+  uint32 version = 3;
+  Sm4GcmHkdfStreamingParams params = 1;
+  uint32 key_size = 2;  // size of the main key (aka. "ikm", input key material)
+}
+
+// key_type: type.googleapis.com/ddrpa.crypto.tink.Sm4GcmHkdfStreamingKey
+message Sm4GcmHkdfStreamingKey {
+  uint32 version = 1;
+  Sm4GcmHkdfStreamingParams params = 2;
+  bytes key_value = 3;  // Placeholder for ctype and debug_redact.
+}
