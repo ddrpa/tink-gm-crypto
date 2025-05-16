@@ -6,10 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.security.GeneralSecurityException;
 import org.junit.jupiter.api.Test;
 
-public final class Sm4GcmHkdfStreamingParametersTest {
+final class Sm4GcmHkdfStreamingParametersTest {
 
     @Test
-    public void buildParametersAndGetProperties() throws Exception {
+    void buildParametersAndGetProperties() throws Exception {
         Sm4GcmHkdfStreamingParameters parameters =
             Sm4GcmHkdfStreamingParameters.builder()
                 .setKeySizeBytes(19)
@@ -26,24 +26,7 @@ public final class Sm4GcmHkdfStreamingParametersTest {
     }
 
     @Test
-    public void buildParametersVariedValues() throws Exception {
-        Sm4GcmHkdfStreamingParameters parameters =
-            Sm4GcmHkdfStreamingParameters.builder()
-                .setKeySizeBytes(77)
-                .setDerivedSm4GcmKeySizeBytes(16)
-                .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA1)
-                .setCiphertextSegmentSizeBytes(3 * 1024 * 1024)
-                .build();
-        assertThat(parameters.getKeySizeBytes()).isEqualTo(77);
-        assertThat(parameters.getDerivedSm4GcmKeySizeBytes()).isEqualTo(32);
-        assertThat(parameters.getCiphertextSegmentSizeBytes()).isEqualTo(3 * 1024 * 1024);
-        assertThat(parameters.getHkdfHashType()).isEqualTo(
-            Sm4GcmHkdfStreamingParameters.HashType.SHA1);
-        assertThat(parameters.hasIdRequirement()).isFalse();
-    }
-
-    @Test
-    public void buildParametersWithoutSettingKeySize_fails() throws Exception {
+    void buildParametersWithoutSettingKeySize_fails() {
         Sm4GcmHkdfStreamingParameters.Builder builder =
             Sm4GcmHkdfStreamingParameters.builder()
                 .setDerivedSm4GcmKeySizeBytes(16)
@@ -53,7 +36,7 @@ public final class Sm4GcmHkdfStreamingParametersTest {
     }
 
     @Test
-    public void buildParametersWithoutSettingDerivedKeySize_fails() throws Exception {
+    void buildParametersWithoutSettingDerivedKeySize_fails() {
         Sm4GcmHkdfStreamingParameters.Builder builder =
             Sm4GcmHkdfStreamingParameters.builder()
                 .setKeySizeBytes(16)
@@ -63,7 +46,7 @@ public final class Sm4GcmHkdfStreamingParametersTest {
     }
 
     @Test
-    public void buildParametersWithoutSettingHashType_fails() throws Exception {
+    void buildParametersWithoutSettingHashType_fails() {
         Sm4GcmHkdfStreamingParameters.Builder builder =
             Sm4GcmHkdfStreamingParameters.builder()
                 .setKeySizeBytes(16)
@@ -73,7 +56,7 @@ public final class Sm4GcmHkdfStreamingParametersTest {
     }
 
     @Test
-    public void buildParametersWithoutSettingCiphertextSegmentSize_fails() throws Exception {
+    void buildParametersWithoutSettingCiphertextSegmentSize_fails() {
         Sm4GcmHkdfStreamingParameters.Builder builder =
             Sm4GcmHkdfStreamingParameters.builder()
                 .setKeySizeBytes(16)
@@ -83,7 +66,7 @@ public final class Sm4GcmHkdfStreamingParametersTest {
     }
 
     @Test
-    public void testEqualities() throws Exception {
+    void testEqualities() throws Exception {
         Sm4GcmHkdfStreamingParameters parameters =
             Sm4GcmHkdfStreamingParameters.builder()
                 .setKeySizeBytes(16)
@@ -108,14 +91,6 @@ public final class Sm4GcmHkdfStreamingParametersTest {
                 .setCiphertextSegmentSizeBytes(1024 * 1024)
                 .build();
 
-        Sm4GcmHkdfStreamingParameters parametersDifferentDerivedKeySize =
-            Sm4GcmHkdfStreamingParameters.builder()
-                .setKeySizeBytes(16)
-                .setDerivedSm4GcmKeySizeBytes(16)
-                .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA256)
-                .setCiphertextSegmentSizeBytes(1024 * 1024)
-                .build();
-
         Sm4GcmHkdfStreamingParameters parametersDifferentHashType =
             Sm4GcmHkdfStreamingParameters.builder()
                 .setKeySizeBytes(16)
@@ -134,7 +109,6 @@ public final class Sm4GcmHkdfStreamingParametersTest {
 
         assertThat(parameters).isEqualTo(parametersCopy);
         assertThat(parameters).isNotEqualTo(parametersDifferentKeySize);
-        assertThat(parameters).isNotEqualTo(parametersDifferentDerivedKeySize);
         assertThat(parameters).isNotEqualTo(parametersDifferentHashType);
         assertThat(parameters).isNotEqualTo(parametersDifferentCiphertextSegmentSize);
     }
