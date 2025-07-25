@@ -1,0 +1,55 @@
+// Proto definitions for SM2 digital signature algorithm
+syntax = "proto3";
+
+package google.crypto.tink;
+
+import "common.proto";
+
+option java_package = "cc.ddrpa.crypto.tink.proto";
+option java_multiple_files = true;
+option objc_class_prefix = "TINKPB";
+
+// SM2 signature algorithm parameters
+message Sm2SignatureParams {
+  // Hash function used in signing and verification. 
+  // For SM2, this is typically SM3, but SHA256 is also supported.
+  HashType hash_type = 1;
+  
+  // Signature encoding (DER or IEEE_P1363).
+  Sm2SignatureEncoding encoding = 2;
+}
+
+// Supported signature encodings for SM2
+enum Sm2SignatureEncoding {
+  UNKNOWN_ENCODING = 0;
+  // The signature is encoded as an ASN.1 DER SEQUENCE of two INTEGERs.
+  DER = 1;
+  // The signature is encoded as two big-endian integer values in a fixed byte sequence.
+  IEEE_P1363 = 2;
+}
+
+// Format for generating new SM2 private keys
+message Sm2PrivateKeyFormat {
+  uint32 version = 1;
+  Sm2SignatureParams params = 2;
+}
+
+// SM2 public key
+message Sm2PublicKey {
+  uint32 version = 1;
+  Sm2SignatureParams params = 2;
+  // The public key is a point on the SM2 curve encoded in uncompressed format.
+  // For SM2P256V1: 65 bytes (0x04 || x || y)
+  bytes x = 3;  // x coordinate of the public key point (32 bytes for SM2P256V1)
+  bytes y = 4;  // y coordinate of the public key point (32 bytes for SM2P256V1)
+}
+
+// SM2 private key
+// key_type: type.googleapis.com/ddrpa.crypto.tink.Sm2PrivateKey
+message Sm2PrivateKey {
+  uint32 version = 1;
+  Sm2SignatureParams params = 2;
+  // The private key value (32 bytes for SM2P256V1)
+  bytes key_value = 3;
+  Sm2PublicKey public_key = 4;
+}

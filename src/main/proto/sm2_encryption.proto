@@ -1,0 +1,73 @@
+// Proto definitions for SM2 public key encryption
+syntax = "proto3";
+
+package google.crypto.tink;
+
+import "common.proto";
+
+option java_package = "cc.ddrpa.crypto.tink.proto";
+option java_multiple_files = true;
+option objc_class_prefix = "TINKPB";
+
+// SM2 encryption key derivation function parameters
+message Sm2KdfParams {
+  // Hash function used for key derivation (typically SM3 or SHA256)
+  HashType kdf_hash_type = 1;
+}
+
+// SM2 encryption algorithm parameters
+message Sm2EncryptionParams {
+  // Key derivation function parameters
+  Sm2KdfParams kdf_params = 1;
+  
+  // Symmetric encryption algorithm used for data encryption
+  // This follows the hybrid encryption pattern similar to ECIES
+  Sm2SymmetricCipher dem_params = 2;
+}
+
+// Supported symmetric ciphers for SM2 hybrid encryption
+message Sm2SymmetricCipher {
+  oneof dem_cipher {
+    // SM4 in GCM mode
+    Sm4GcmParams sm4_gcm = 1;
+    // AES in GCM mode (for compatibility)
+    AesGcmParams aes_gcm = 2;
+  }
+}
+
+// SM4-GCM parameters for hybrid encryption
+message Sm4GcmParams {
+  uint32 iv_size = 1;  // Initialization vector size (typically 12 bytes)
+  uint32 tag_size = 2; // Authentication tag size (typically 16 bytes)
+}
+
+// AES-GCM parameters for hybrid encryption (compatibility)
+message AesGcmParams {
+  uint32 iv_size = 1;  // Initialization vector size (typically 12 bytes)
+  uint32 tag_size = 2; // Authentication tag size (typically 16 bytes)
+}
+
+// Format for generating new SM2 encryption key pairs
+message Sm2EncryptionPrivateKeyFormat {
+  uint32 version = 1;
+  Sm2EncryptionParams params = 2;
+}
+
+// SM2 public key for encryption
+message Sm2EncryptionPublicKey {
+  uint32 version = 1;
+  Sm2EncryptionParams params = 2;
+  // The public key is a point on the SM2 curve
+  bytes x = 3;  // x coordinate of the public key point (32 bytes for SM2P256V1)
+  bytes y = 4;  // y coordinate of the public key point (32 bytes for SM2P256V1)
+}
+
+// SM2 private key for encryption
+// key_type: type.googleapis.com/ddrpa.crypto.tink.Sm2EncryptionPrivateKey
+message Sm2EncryptionPrivateKey {
+  uint32 version = 1;
+  Sm2EncryptionParams params = 2;
+  // The private key value (32 bytes for SM2P256V1)
+  bytes key_value = 3;
+  Sm2EncryptionPublicKey public_key = 4;
+}
