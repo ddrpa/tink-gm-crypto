@@ -34,6 +34,35 @@ Sm4GcmHkdfStreamingKeyManager.register(true);
 
 参考 `src/test/java/cc/ddrpa/playground/UseStreamingAEAD.java` 使用。
 
+## 数字签名
+
+参照 ECDSA 实现了 SM2 数字签名支持，私钥类型为 `type.googleapis.com/ddrpa.crypto.tink.Sm2PrivateKey`，公钥类型为 `type.googleapis.com/ddrpa.crypto.tink.Sm2PublicKey`。
+
+```java
+SignatureConfig.register();
+Sm2SignatureKeyManager.register(true);
+```
+
+支持的功能：
+- **哈希算法**：SM3、SHA256
+- **签名编码**：DER、IEEE P1363
+- **前缀模式**：TINK、NO_PREFIX、LEGACY、CRUNCHY
+- **椭圆曲线**：SM2P256V1
+
+可用的密钥模板：
+```java
+// SM3 哈希 + DER 编码 + TINK 前缀
+Sm2SignatureKeyManager.sm2Sm3Template()
+
+// SHA256 哈希 + DER 编码 + TINK 前缀  
+Sm2SignatureKeyManager.sm2Sha256Template()
+
+// SM3 哈希 + DER 编码 + 无前缀
+Sm2SignatureKeyManager.rawSm2Sm3Template()
+```
+
+参考 `src/test/java/cc/ddrpa/playground/UseSM2Signature.java` 使用。
+
 # 计划添加
 
-- SM2（椭圆曲线数字签名算法与公钥加密）支持
+- SM2（椭圆曲线公钥加密）支持
