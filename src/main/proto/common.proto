@@ -48,4 +48,5 @@ enum HashType {
   SHA256 = 3;
   SHA512 = 4;
   SHA224 = 5;
+  SM3 = 6;   // SM3 hash algorithm (Chinese national standard GM/T 0004-2012)
 }

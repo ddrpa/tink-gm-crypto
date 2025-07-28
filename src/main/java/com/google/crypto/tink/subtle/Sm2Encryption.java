@@ -11,6 +11,7 @@ import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
+import org.bouncycastle.crypto.params.ParametersWithRandom;
 import org.bouncycastle.crypto.digests.SHA256Digest;
 import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.math.ec.ECPoint;
@@ -194,7 +195,13 @@ public final class Sm2Encryption {
             
             // Encrypt the symmetric key using SM2
             SM2Engine sm2Engine = new SM2Engine(getDigest());
-            sm2Engine.init(true, publicKey);
+            
+            // Initialize with public key for encryption
+            // For encryption, we need to wrap the public key with ParametersWithRandom
+            ParametersWithRandom paramsWithRandom = 
+                new ParametersWithRandom(publicKey, new SecureRandom());
+            sm2Engine.init(true, paramsWithRandom);
+            
             byte[] encryptedKey = sm2Engine.processBlock(symmetricKey, 0, symmetricKey.length);
             
             // Encrypt the data using symmetric cipher
