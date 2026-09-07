@@ -93,6 +93,20 @@ Sm2HybridKeyManager.registerPair(true);
 > 私钥与公钥分别使用私钥/公钥密钥集管理，可通过 `KeysetHandle#getPublicKeysetHandle()` 导出公钥密钥集
 > 分发给验证方/加密方（RAW 互操作请使用 NO_PREFIX 变体并自行剥离前缀规则，见各节说明）。
 
+# 面向不使用 Google Tink 的对方系统（跨系统互操作）
+
+加解密通常发生在两个不同系统之间：本库一侧使用 Tink，对方系统开发人员往往不使用 Tink。为此
+仓库提供了独立的互操作资料与一套**对方侧参考实现**（Java + BouncyCastle，纯 BC/JDK、零 Tink
+依赖、可整包拷贝），涵盖全部已支持算法，并按互操作友好度分级：
+
+- **可直接互操作**（国标/通用格式）：SM4-GCM（`SM4_GCM_RAW`）、SM2 签名（`SM2_SIGN_RAW`，
+  64 字节 r‖s、默认用户标识）、标准 SM2 加密（`SM2_ENCRYPTION_RAW`，C1C3C2）；
+- **本库自定义格式**（按线格式文档实现即可互通）：SM4-GCM-HKDF 流式 AEAD、SM2-KEM+SM4-GCM 混合。
+
+仓库内自动测试对“Tink ⇄ 对方侧（纯 BC）”做双向自检并固化历史向量，确保示例真实可用。详见
+[interop/](interop/README.md)（密钥交换、各算法线格式与注意事项、对方代码拷贝与自检方法、
+导出裸密钥工具 `src/test/java/cc/ddrpa/playground/ExportKeysForInterop.java`）。
+
 # 计划添加
 
 - PEM / SPKI 公钥导入（仅数字签名）：参照 Tink `SignaturePemKeysetReader` 的机制，按 SM2 曲线/算法
@@ -105,8 +119,9 @@ Sm2HybridKeyManager.registerPair(true);
 
 pom.xml 中的 `tink.version` 属性声明了所依赖的 Tink 版本（默认 1.23.0）。Tink 升级后可用下面的方式快速验证本库是否仍然适配：
 
-1. 运行当前默认版本的全部单元测试（299 个用例，覆盖密钥/参数序列化、密钥模板与 KeysetHandle 生成、
-   对称与非对称加解密往返、签名与验签、SM2 与 Bouncy Castle 交叉验证、非法输入拒绝等）：
+1. 运行当前默认版本的全部单元测试（331 个用例，覆盖密钥/参数序列化、密钥模板与 KeysetHandle 生成、
+   对称与非对称加解密往返、签名与验签、SM2 与 Bouncy Castle 交叉验证、跨系统互操作自检
+   （Tink ⇄ 纯 BC，见 [interop/](interop/README.md)）、非法输入拒绝等）：
 
    ```shell
    ./mvnw test
