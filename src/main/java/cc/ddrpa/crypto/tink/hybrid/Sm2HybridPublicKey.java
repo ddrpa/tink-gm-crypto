@@ -8,10 +8,11 @@ import com.google.crypto.tink.util.Bytes;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.Immutable;
 import com.google.errorprone.annotations.RestrictedApi;
+
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * Represents the public portion of an SM2 hybrid encryption (F2) key.
@@ -30,10 +31,10 @@ public final class Sm2HybridPublicKey extends HybridPublicKey {
     private final Integer idRequirement;
 
     private Sm2HybridPublicKey(
-        Sm2HybridParameters parameters,
-        Bytes publicKey,
-        Bytes outputPrefix,
-        @Nullable Integer idRequirement) {
+            Sm2HybridParameters parameters,
+            Bytes publicKey,
+            Bytes outputPrefix,
+            @Nullable Integer idRequirement) {
         this.parameters = parameters;
         this.publicKey = publicKey;
         this.outputPrefix = outputPrefix;
@@ -41,10 +42,10 @@ public final class Sm2HybridPublicKey extends HybridPublicKey {
     }
 
     @RestrictedApi(
-        explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
-        link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
-        allowedOnPath = ".*Test\\.java",
-        allowlistAnnotations = {AccessesPartialKey.class})
+            explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
+            link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
+            allowedOnPath = ".*Test\\.java",
+            allowlistAnnotations = {AccessesPartialKey.class})
     public static Sm2HybridPublicKey.Builder builder() {
         return new Sm2HybridPublicKey.Builder();
     }
@@ -54,10 +55,10 @@ public final class Sm2HybridPublicKey extends HybridPublicKey {
      * sm2p256v1} curve point.
      */
     @RestrictedApi(
-        explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
-        link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
-        allowedOnPath = ".*Test\\.java",
-        allowlistAnnotations = {AccessesPartialKey.class})
+            explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
+            link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
+            allowedOnPath = ".*Test\\.java",
+            allowlistAnnotations = {AccessesPartialKey.class})
     public Bytes getPublicKey() {
         return publicKey;
     }
@@ -86,8 +87,8 @@ public final class Sm2HybridPublicKey extends HybridPublicKey {
         Sm2HybridPublicKey that = (Sm2HybridPublicKey) o;
         // Since outputPrefix is a function of parameters, we can ignore it here.
         return that.parameters.equals(parameters)
-            && that.publicKey.equals(publicKey)
-            && Objects.equals(that.idRequirement, idRequirement);
+                && that.publicKey.equals(publicKey)
+                && Objects.equals(that.idRequirement, idRequirement);
     }
 
     /**
@@ -107,7 +108,7 @@ public final class Sm2HybridPublicKey extends HybridPublicKey {
 
         @CanIgnoreReturnValue
         public Sm2HybridPublicKey.Builder setParameters(
-            Sm2HybridParameters parameters) {
+                Sm2HybridParameters parameters) {
             this.parameters = parameters;
             return this;
         }
@@ -134,10 +135,10 @@ public final class Sm2HybridPublicKey extends HybridPublicKey {
             }
             if (parameters.getVariant() == Sm2HybridParameters.Variant.TINK) {
                 return Bytes.copyFrom(
-                    ByteBuffer.allocate(5).put((byte) 1).putInt(idRequirement).array());
+                        ByteBuffer.allocate(5).put((byte) 1).putInt(idRequirement).array());
             }
             throw new IllegalStateException(
-                "Unknown Sm2HybridParameters.Variant: " + parameters.getVariant());
+                    "Unknown Sm2HybridParameters.Variant: " + parameters.getVariant());
         }
 
         public Sm2HybridPublicKey build() throws GeneralSecurityException {
@@ -152,15 +153,15 @@ public final class Sm2HybridPublicKey extends HybridPublicKey {
             Sm2KeyUtil.decodePublicPoint(publicKey.toByteArray());
             if (parameters.hasIdRequirement() && idRequirement == null) {
                 throw new GeneralSecurityException(
-                    "Cannot create key without ID requirement with parameters with ID requirement");
+                        "Cannot create key without ID requirement with parameters with ID requirement");
             }
             if (!parameters.hasIdRequirement() && idRequirement != null) {
                 throw new GeneralSecurityException(
-                    "Cannot create key with ID requirement with parameters without ID requirement");
+                        "Cannot create key with ID requirement with parameters without ID requirement");
             }
             Bytes outputPrefix = getOutputPrefix();
             return new Sm2HybridPublicKey(
-                parameters, publicKey, outputPrefix, idRequirement);
+                    parameters, publicKey, outputPrefix, idRequirement);
         }
     }
 }

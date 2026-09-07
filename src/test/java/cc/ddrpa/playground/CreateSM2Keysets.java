@@ -6,6 +6,7 @@ import cc.ddrpa.crypto.tink.signature.Sm2SignKeyManager;
 import com.google.crypto.tink.CleartextKeysetHandle;
 import com.google.crypto.tink.JsonKeysetWriter;
 import com.google.crypto.tink.KeysetHandle;
+
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Files;
@@ -39,42 +40,42 @@ public class CreateSM2Keysets {
 
     private static void signatureKeysets() throws GeneralSecurityException, IOException {
         KeysetHandle privateHandle =
-            KeysetHandle.newBuilder()
-                .addEntry(
-                    KeysetHandle.generateEntryFromParametersName("SM2_SIGN")
-                        .makePrimary()
-                        .withRandomId())
-                .build();
+                KeysetHandle.newBuilder()
+                        .addEntry(
+                                KeysetHandle.generateEntryFromParametersName("SM2_SIGN")
+                                        .makePrimary()
+                                        .withRandomId())
+                        .build();
         write(privateHandle, "sm2_signature_keyset.json");
         write(privateHandle.getPublicKeysetHandle(), "sm2_signature_public_keyset.json");
     }
 
     private static void encryptionKeysets() throws GeneralSecurityException, IOException {
         KeysetHandle privateHandle =
-            KeysetHandle.newBuilder()
-                .addEntry(
-                    KeysetHandle.generateEntryFromParametersName("SM2_ENCRYPTION")
-                        .makePrimary()
-                        .withRandomId())
-                .build();
+                KeysetHandle.newBuilder()
+                        .addEntry(
+                                KeysetHandle.generateEntryFromParametersName("SM2_ENCRYPTION")
+                                        .makePrimary()
+                                        .withRandomId())
+                        .build();
         write(privateHandle, "sm2_encryption_keyset.json");
         write(privateHandle.getPublicKeysetHandle(), "sm2_encryption_public_keyset.json");
     }
 
     private static void hybridKeysets() throws GeneralSecurityException, IOException {
         KeysetHandle privateHandle =
-            KeysetHandle.newBuilder()
-                .addEntry(
-                    KeysetHandle.generateEntryFromParametersName("SM2_HYBRID")
-                        .makePrimary()
-                        .withRandomId())
-                .build();
+                KeysetHandle.newBuilder()
+                        .addEntry(
+                                KeysetHandle.generateEntryFromParametersName("SM2_HYBRID")
+                                        .makePrimary()
+                                        .withRandomId())
+                        .build();
         write(privateHandle, "sm2_hybrid_keyset.json");
         write(privateHandle.getPublicKeysetHandle(), "sm2_hybrid_public_keyset.json");
     }
 
     private static void write(KeysetHandle handle, String fileName)
-        throws GeneralSecurityException, IOException {
+            throws GeneralSecurityException, IOException {
         try (OutputStream os = Files.newOutputStream(Paths.get(fileName))) {
             CleartextKeysetHandle.write(handle, JsonKeysetWriter.withOutputStream(os));
         }

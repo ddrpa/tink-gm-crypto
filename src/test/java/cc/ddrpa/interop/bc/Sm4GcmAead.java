@@ -1,12 +1,13 @@
 package cc.ddrpa.interop.bc;
 
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.util.Arrays;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import javax.crypto.Cipher;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.util.Arrays;
 
 /**
  * 对方侧（不使用 Google Tink）的 SM4-GCM AEAD 参考实现（仅 BouncyCastle + JDK）。
@@ -16,7 +17,7 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
  * <pre>
  *   密文 = IV(12) ‖ SM4-GCM 密文 ‖ tag(16)
  * </pre>
- *
+ * <p>
  * 其中 SM4 密钥为 16 字节（128 位）、IV 为 12 字节（96 位）、tag 为 16 字节（128 位），与 GB/T 32907
  * 定义的 SM4 分组算法配合 GCM 工作模式的标准用法一致；关联数据（AAD）由 GCM 认证，{@code null} 与
  * 空数组等价。这也是 OpenSSL/GmSSL 等实现使用 SM4-GCM 时默认的布局。
@@ -26,18 +27,22 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
  */
 public final class Sm4GcmAead {
 
-    private Sm4GcmAead() {
-    }
-
-    /** SM4 密钥长度：16 字节（128 位）。 */
+    /**
+     * SM4 密钥长度：16 字节（128 位）。
+     */
     public static final int KEY_SIZE_BYTES = 16;
-    /** IV 长度：12 字节（96 位）。 */
+    /**
+     * IV 长度：12 字节（96 位）。
+     */
     public static final int IV_SIZE_BYTES = 12;
-    /** GCM tag 长度：16 字节（128 位）。 */
+    /**
+     * GCM tag 长度：16 字节（128 位）。
+     */
     public static final int TAG_SIZE_BYTES = 16;
-
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
+    private Sm4GcmAead() {
+    }
 
     private static Cipher newCipher() throws GeneralSecurityException {
         return Cipher.getInstance("SM4/GCM/NoPadding", BC_PROVIDER);
@@ -46,7 +51,7 @@ public final class Sm4GcmAead {
     private static void checkKey(byte[] key) throws GeneralSecurityException {
         if (key == null || key.length != KEY_SIZE_BYTES) {
             throw new GeneralSecurityException(
-                "SM4 key must be exactly " + KEY_SIZE_BYTES + " bytes");
+                    "SM4 key must be exactly " + KEY_SIZE_BYTES + " bytes");
         }
     }
 
@@ -58,7 +63,7 @@ public final class Sm4GcmAead {
      * @param associatedData 关联数据（可为 null/空，作为 GCM AAD 认证）
      */
     public static byte[] encrypt(byte[] key, byte[] plaintext, byte[] associatedData)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         checkKey(key);
         if (plaintext == null) {
             throw new NullPointerException("plaintext is null");
@@ -74,21 +79,21 @@ public final class Sm4GcmAead {
      * @param iv 必须恰为 12 字节
      */
     public static byte[] encryptWithIv(
-        byte[] key, byte[] iv, byte[] plaintext, byte[] associatedData)
-        throws GeneralSecurityException {
+            byte[] key, byte[] iv, byte[] plaintext, byte[] associatedData)
+            throws GeneralSecurityException {
         checkKey(key);
         if (iv == null || iv.length != IV_SIZE_BYTES) {
             throw new GeneralSecurityException(
-                "IV must be exactly " + IV_SIZE_BYTES + " bytes");
+                    "IV must be exactly " + IV_SIZE_BYTES + " bytes");
         }
         if (plaintext == null) {
             throw new NullPointerException("plaintext is null");
         }
         Cipher cipher = newCipher();
         cipher.init(
-            Cipher.ENCRYPT_MODE,
-            new SecretKeySpec(key, "SM4"),
-            new GCMParameterSpec(8 * TAG_SIZE_BYTES, iv));
+                Cipher.ENCRYPT_MODE,
+                new SecretKeySpec(key, "SM4"),
+                new GCMParameterSpec(8 * TAG_SIZE_BYTES, iv));
         if (associatedData != null && associatedData.length != 0) {
             cipher.updateAAD(associatedData);
         }
@@ -103,10 +108,10 @@ public final class Sm4GcmAead {
      * 解密 {@code IV ‖ 密文 ‖ tag} 并校验认证标签。
      *
      * @return 明文；tag 校验失败、长度非法等均抛出 {@link GeneralSecurityException}（建议调用方
-     *     对解密失败统一返回错误，避免向调用者区分失败原因）
+     * 对解密失败统一返回错误，避免向调用者区分失败原因）
      */
     public static byte[] decrypt(byte[] key, byte[] ciphertext, byte[] associatedData)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         checkKey(key);
         if (ciphertext == null) {
             throw new NullPointerException("ciphertext is null");
@@ -116,15 +121,15 @@ public final class Sm4GcmAead {
         }
         Cipher cipher = newCipher();
         cipher.init(
-            Cipher.DECRYPT_MODE,
-            new SecretKeySpec(key, "SM4"),
-            new GCMParameterSpec(
-                8 * TAG_SIZE_BYTES, ciphertext, 0, IV_SIZE_BYTES));
+                Cipher.DECRYPT_MODE,
+                new SecretKeySpec(key, "SM4"),
+                new GCMParameterSpec(
+                        8 * TAG_SIZE_BYTES, ciphertext, 0, IV_SIZE_BYTES));
         if (associatedData != null && associatedData.length != 0) {
             cipher.updateAAD(associatedData);
         }
         byte[] plaintext = cipher.doFinal(
-            ciphertext, IV_SIZE_BYTES, ciphertext.length - IV_SIZE_BYTES);
+                ciphertext, IV_SIZE_BYTES, ciphertext.length - IV_SIZE_BYTES);
         // 防意外共享内部数组：BC 解密结果可能复用输入缓冲，返回副本更稳妥。
         return Arrays.copyOf(plaintext, plaintext.length);
     }

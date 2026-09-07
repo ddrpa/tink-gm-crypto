@@ -12,28 +12,29 @@
 // See the License for the specified language governing permissions and
 // limitations under the License.
 //
-////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
 
 package com.google.crypto.tink.internal.testing;
 
 /** Test helpers for BigInteger usage. */
 public final class BigIntegerTestUtil {
-  /**
-   * Adds a leading zero to the big-endian encoding, if necessary.
-   *
-   * <p>When encoding a BigInteger using `toBigEndianBytes()`, the minimal big-endian encoding uses
-   * the two's complement representation. This means that the encoding may have a leading zero.
-   */
-  public static byte[] ensureLeadingZeroBit(byte[] minimalEncodedBigInteger) {
-    if (minimalEncodedBigInteger[0] < 0) {
-      // Add a leading zero to the encoding.
-      byte[] twosComplementEncoded = new byte[minimalEncodedBigInteger.length + 1];
-      System.arraycopy(
-          minimalEncodedBigInteger, 0, twosComplementEncoded, 1, minimalEncodedBigInteger.length);
-      return twosComplementEncoded;
+    private BigIntegerTestUtil() {
     }
-    return minimalEncodedBigInteger;
-  }
 
-  private BigIntegerTestUtil() {}
+    /**
+     * Adds a leading zero to the big-endian encoding, if necessary.
+     *
+     * <p>When encoding a BigInteger using `toBigEndianBytes()`, the minimal big-endian encoding uses
+     * the two's complement representation. This means that the encoding may have a leading zero.
+     */
+    public static byte[] ensureLeadingZeroBit(byte[] minimalEncodedBigInteger) {
+        if (minimalEncodedBigInteger[0] < 0) {
+            // Add a leading zero to the encoding.
+            byte[] twosComplementEncoded = new byte[minimalEncodedBigInteger.length + 1];
+            System.arraycopy(
+                    minimalEncodedBigInteger, 0, twosComplementEncoded, 1, minimalEncodedBigInteger.length);
+            return twosComplementEncoded;
+        }
+        return minimalEncodedBigInteger;
+    }
 }

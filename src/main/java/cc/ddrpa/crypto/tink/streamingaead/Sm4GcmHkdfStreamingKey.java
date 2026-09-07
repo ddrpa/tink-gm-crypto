@@ -5,6 +5,7 @@ import com.google.crypto.tink.Key;
 import com.google.crypto.tink.streamingaead.StreamingAeadKey;
 import com.google.crypto.tink.util.SecretBytes;
 import com.google.errorprone.annotations.RestrictedApi;
+
 import java.security.GeneralSecurityException;
 
 /**
@@ -18,19 +19,19 @@ public final class Sm4GcmHkdfStreamingKey extends StreamingAeadKey {
     private final SecretBytes initialKeymaterial;
 
     private Sm4GcmHkdfStreamingKey(
-        Sm4GcmHkdfStreamingParameters parameters, SecretBytes initialKeymaterial) {
+            Sm4GcmHkdfStreamingParameters parameters, SecretBytes initialKeymaterial) {
         this.parameters = parameters;
         this.initialKeymaterial = initialKeymaterial;
     }
 
     @RestrictedApi(
-        explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
-        link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
-        allowedOnPath = ".*Test\\.java",
-        allowlistAnnotations = {AccessesPartialKey.class})
+            explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
+            link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
+            allowedOnPath = ".*Test\\.java",
+            allowlistAnnotations = {AccessesPartialKey.class})
     public static Sm4GcmHkdfStreamingKey create(
-        Sm4GcmHkdfStreamingParameters parameters, SecretBytes initialKeymaterial)
-        throws GeneralSecurityException {
+            Sm4GcmHkdfStreamingParameters parameters, SecretBytes initialKeymaterial)
+            throws GeneralSecurityException {
 
         if (parameters.getKeySizeBytes() != initialKeymaterial.size()) {
             throw new GeneralSecurityException("Key size mismatch");
@@ -39,10 +40,10 @@ public final class Sm4GcmHkdfStreamingKey extends StreamingAeadKey {
     }
 
     @RestrictedApi(
-        explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
-        link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
-        allowedOnPath = ".*Test\\.java",
-        allowlistAnnotations = {AccessesPartialKey.class})
+            explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
+            link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
+            allowedOnPath = ".*Test\\.java",
+            allowlistAnnotations = {AccessesPartialKey.class})
     public SecretBytes getInitialKeyMaterial() {
         return initialKeymaterial;
     }
@@ -59,6 +60,6 @@ public final class Sm4GcmHkdfStreamingKey extends StreamingAeadKey {
         }
         Sm4GcmHkdfStreamingKey that = (Sm4GcmHkdfStreamingKey) o;
         return that.parameters.equals(parameters)
-            && that.initialKeymaterial.equalsSecretBytes(initialKeymaterial);
+                && that.initialKeymaterial.equalsSecretBytes(initialKeymaterial);
     }
 }

@@ -1,9 +1,5 @@
 package cc.ddrpa.interop;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import cc.ddrpa.crypto.tink.hybrid.Sm2HybridKeyManager;
 import cc.ddrpa.interop.bc.Sm2KemSm4GcmHybrid;
 import cc.ddrpa.interop.testing.InteropFixtures;
@@ -12,10 +8,13 @@ import com.google.crypto.tink.HybridDecrypt;
 import com.google.crypto.tink.HybridEncrypt;
 import com.google.crypto.tink.hybrid.HybridDecryptWrapper;
 import com.google.crypto.tink.hybrid.HybridEncryptWrapper;
-import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * SM2-KEM + SM4-GCM 混合加密（本库自定义格式）的跨系统互操作自检：Tink 侧 ⇄ 对方侧（纯
@@ -77,11 +76,11 @@ class Sm2HybridInteropTest {
 
         byte[] tinkCiphertext = encryptor.encrypt(PLAINTEXT, CONTEXT);
         assertThrows(GeneralSecurityException.class,
-            () -> Sm2KemSm4GcmHybrid.decrypt(D, tinkCiphertext, wrongContext));
+                () -> Sm2KemSm4GcmHybrid.decrypt(D, tinkCiphertext, wrongContext));
 
         byte[] bcCiphertext = Sm2KemSm4GcmHybrid.encrypt(Q, PLAINTEXT, CONTEXT);
         assertThrows(GeneralSecurityException.class,
-            () -> decryptor.decrypt(bcCiphertext, wrongContext));
+                () -> decryptor.decrypt(bcCiphertext, wrongContext));
     }
 
     @Test
@@ -106,12 +105,12 @@ class Sm2HybridInteropTest {
         byte[] flipped = Arrays.copyOf(ciphertext, ciphertext.length);
         flipped[flipped.length - 1] ^= 1;
         assertThrows(GeneralSecurityException.class,
-            () -> Sm2KemSm4GcmHybrid.decrypt(D, flipped, CONTEXT));
+                () -> Sm2KemSm4GcmHybrid.decrypt(D, flipped, CONTEXT));
         assertThrows(GeneralSecurityException.class, () -> decryptor.decrypt(flipped, CONTEXT));
         // 篡改 C1（首字节）。
         byte[] badC1 = Arrays.copyOf(ciphertext, ciphertext.length);
         badC1[0] = 0x05;
         assertThrows(GeneralSecurityException.class,
-            () -> Sm2KemSm4GcmHybrid.decrypt(D, badC1, CONTEXT));
+                () -> Sm2KemSm4GcmHybrid.decrypt(D, badC1, CONTEXT));
     }
 }

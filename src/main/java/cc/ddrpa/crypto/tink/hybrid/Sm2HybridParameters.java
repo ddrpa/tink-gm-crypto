@@ -3,9 +3,10 @@ package cc.ddrpa.crypto.tink.hybrid;
 import com.google.crypto.tink.hybrid.HybridParameters;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.Immutable;
+
+import javax.annotation.Nullable;
 import java.security.GeneralSecurityException;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * Describes the parameters of an {@link Sm2HybridPrivateKey} / {@link Sm2HybridPublicKey}.
@@ -68,9 +69,9 @@ public final class Sm2HybridParameters extends HybridParameters {
     public static final class Variant {
 
         public static final Sm2HybridParameters.Variant TINK =
-            new Sm2HybridParameters.Variant("TINK");
+                new Sm2HybridParameters.Variant("TINK");
         public static final Sm2HybridParameters.Variant NO_PREFIX =
-            new Sm2HybridParameters.Variant("NO_PREFIX");
+                new Sm2HybridParameters.Variant("NO_PREFIX");
 
         private final String name;
 
@@ -91,14 +92,14 @@ public final class Sm2HybridParameters extends HybridParameters {
 
         @Nullable
         private Sm2HybridParameters.Variant variant =
-            Sm2HybridParameters.Variant.NO_PREFIX;
+                Sm2HybridParameters.Variant.NO_PREFIX;
 
         private Builder() {
         }
 
         @CanIgnoreReturnValue
         public Sm2HybridParameters.Builder setVariant(
-            Sm2HybridParameters.Variant variant) {
+                Sm2HybridParameters.Variant variant) {
             this.variant = variant;
             return this;
         }

@@ -1,13 +1,14 @@
 package cc.ddrpa.interop.bc;
 
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.crypto.engines.SM2Engine;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.params.ParametersWithRandom;
+
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
 
 /**
  * 对方侧（不使用 Google Tink）的<strong>标准 SM2 公钥加密</strong>参考实现（仅 BouncyCastle + JDK）。
@@ -18,7 +19,7 @@ import org.bouncycastle.crypto.params.ParametersWithRandom;
  * <pre>
  *   密文 = C1(65) ‖ C3(32) ‖ C2(len(明文))
  * </pre>
- *
+ * <p>
  * 其中 C1 是临时公钥点的 65 字节非压缩编码（0x04 ‖ X ‖ Y），C3 是 32 字节 SM3 摘要，C2 与明文等长。
  * 标准 SM2 没有关联数据槽位，因此调用方不得使用 AAD/contextInfo；明文必须非空（SM2 引擎不支持
  * 零长度输入）。
@@ -28,22 +29,27 @@ import org.bouncycastle.crypto.params.ParametersWithRandom;
  */
 public final class Sm2StandardEncryption {
 
+    /**
+     * C1 长度：65 字节非压缩点。
+     */
+    public static final int C1_SIZE = Sm2BcUtil.UNCOMPRESSED_POINT_SIZE;
+    /**
+     * C3 长度：32 字节 SM3 摘要。
+     */
+    public static final int C3_SIZE = 32;
+    /**
+     * 密文体最小长度：C1 + C3 + 至少 1 字节 C2。
+     */
+    public static final int MIN_CIPHERTEXT_SIZE = C1_SIZE + C3_SIZE + 1;
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private Sm2StandardEncryption() {
     }
-
-    /** C1 长度：65 字节非压缩点。 */
-    public static final int C1_SIZE = Sm2BcUtil.UNCOMPRESSED_POINT_SIZE;
-    /** C3 长度：32 字节 SM3 摘要。 */
-    public static final int C3_SIZE = 32;
-    /** 密文体最小长度：C1 + C3 + 至少 1 字节 C2。 */
-    public static final int MIN_CIPHERTEXT_SIZE = C1_SIZE + C3_SIZE + 1;
-
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     /**
      * 使用接收方公钥加密。
      *
-     * @param q 64 字节公钥（X ‖ Y）
+     * @param q         64 字节公钥（X ‖ Y）
      * @param plaintext 明文，必须非空
      * @return 标准 C1C3C2 密文（无前缀）
      */
@@ -67,7 +73,7 @@ public final class Sm2StandardEncryption {
     /**
      * 使用私钥解密标准 C1C3C2 密文。
      *
-     * @param d 32 字节私钥标量
+     * @param d          32 字节私钥标量
      * @param ciphertext C1C3C2 密文（不得带有任何前缀）
      * @return 明文
      * @throws GeneralSecurityException 长度非法、C1 不在曲线上、C3 校验失败等，统一抛此异常

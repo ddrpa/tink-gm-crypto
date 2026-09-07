@@ -1,23 +1,22 @@
 package cc.ddrpa.interop;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import cc.ddrpa.crypto.tink.streamingaead.Sm4GcmHkdfStreamingKeyManager;
 import cc.ddrpa.interop.bc.Sm4GcmHkdfStreamingAead;
 import cc.ddrpa.interop.testing.InteropFixtures;
 import cc.ddrpa.interop.testing.InteropTink;
 import com.google.crypto.tink.StreamingAead;
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.Test;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Random;
-import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * SM4-GCM-HKDF 流式 AEAD（本库自定义线格式）的跨系统互操作自检：Tink 侧 ⇄ 对方侧（纯
@@ -38,20 +37,20 @@ class Sm4GcmHkdfStreamingInteropTest {
     }
 
     private static byte[] tinkEncrypt(StreamingAead streaming, byte[] plaintext, byte[] aad)
-        throws Exception {
+            throws Exception {
         ByteArrayOutputStream ciphertext = new ByteArrayOutputStream();
         try (OutputStream encrypting =
-            streaming.newEncryptingStream(ciphertext, aad == null ? new byte[0] : aad)) {
+                     streaming.newEncryptingStream(ciphertext, aad == null ? new byte[0] : aad)) {
             encrypting.write(plaintext);
         }
         return ciphertext.toByteArray();
     }
 
     static byte[] tinkDecrypt(StreamingAead streaming, byte[] ciphertext, byte[] aad)
-        throws Exception {
+            throws Exception {
         ByteArrayOutputStream plaintext = new ByteArrayOutputStream();
         try (InputStream decrypting = streaming.newDecryptingStream(
-            new ByteArrayInputStream(ciphertext), aad == null ? new byte[0] : aad)) {
+                new ByteArrayInputStream(ciphertext), aad == null ? new byte[0] : aad)) {
             byte[] buf = new byte[1 << 16];
             int n;
             while ((n = decrypting.read(buf)) > 0) {
@@ -61,7 +60,9 @@ class Sm4GcmHkdfStreamingInteropTest {
         return plaintext.toByteArray();
     }
 
-    /** 生成确定性的伪随机测试数据。 */
+    /**
+     * 生成确定性的伪随机测试数据。
+     */
     private static byte[] randomData(int length, long seed) {
         byte[] data = new byte[length];
         new Random(seed).nextBytes(data);
@@ -78,12 +79,12 @@ class Sm4GcmHkdfStreamingInteropTest {
             byte[] plaintext = randomData(size, 100 + i);
             byte[] aad = (i % 2 == 0) ? InteropFixtures.SAMPLE_AAD : new byte[0];
             byte[] ciphertext =
-                Sm4GcmHkdfStreamingAead.encryptBytes(IKM, SEGMENT_4KB, aad, plaintext);
+                    Sm4GcmHkdfStreamingAead.encryptBytes(IKM, SEGMENT_4KB, aad, plaintext);
             // 对方产出的密文长度与 Tink 布局公式一致。
             assertEquals(
-                Sm4GcmHkdfStreamingAead.ciphertextSize(size, SEGMENT_4KB),
-                ciphertext.length,
-                "size=" + size);
+                    Sm4GcmHkdfStreamingAead.ciphertextSize(size, SEGMENT_4KB),
+                    ciphertext.length,
+                    "size=" + size);
             assertArrayEquals(plaintext, tinkDecrypt(tink, ciphertext, aad));
         }
     }
@@ -99,12 +100,12 @@ class Sm4GcmHkdfStreamingInteropTest {
             byte[] aad = InteropFixtures.SAMPLE_AAD;
             byte[] ciphertext = tinkEncrypt(tink, plaintext, aad);
             assertEquals(
-                Sm4GcmHkdfStreamingAead.ciphertextSize(size, SEGMENT_4KB),
-                ciphertext.length,
-                "size=" + size);
+                    Sm4GcmHkdfStreamingAead.ciphertextSize(size, SEGMENT_4KB),
+                    ciphertext.length,
+                    "size=" + size);
             assertArrayEquals(
-                plaintext,
-                Sm4GcmHkdfStreamingAead.decryptBytes(IKM, SEGMENT_4KB, aad, ciphertext));
+                    plaintext,
+                    Sm4GcmHkdfStreamingAead.decryptBytes(IKM, SEGMENT_4KB, aad, ciphertext));
         }
     }
 
@@ -116,13 +117,13 @@ class Sm4GcmHkdfStreamingInteropTest {
         byte[] aad = InteropFixtures.SAMPLE_AAD;
 
         byte[] bcCiphertext =
-            Sm4GcmHkdfStreamingAead.encryptBytes(IKM, SEGMENT_1MB, aad, plaintext);
+                Sm4GcmHkdfStreamingAead.encryptBytes(IKM, SEGMENT_1MB, aad, plaintext);
         assertArrayEquals(plaintext, tinkDecrypt(tink, bcCiphertext, aad));
 
         byte[] tinkCiphertext = tinkEncrypt(tink, plaintext, aad);
         assertArrayEquals(
-            plaintext,
-            Sm4GcmHkdfStreamingAead.decryptBytes(IKM, SEGMENT_1MB, aad, tinkCiphertext));
+                plaintext,
+                Sm4GcmHkdfStreamingAead.decryptBytes(IKM, SEGMENT_1MB, aad, tinkCiphertext));
     }
 
     @Test
@@ -131,11 +132,11 @@ class Sm4GcmHkdfStreamingInteropTest {
         byte[] plaintext = randomData(5000, 7);
         byte[] ctEmptyAad = tinkEncrypt(tink, plaintext, new byte[0]);
         assertArrayEquals(
-            plaintext,
-            Sm4GcmHkdfStreamingAead.decryptBytes(IKM, SEGMENT_4KB, new byte[0], ctEmptyAad));
+                plaintext,
+                Sm4GcmHkdfStreamingAead.decryptBytes(IKM, SEGMENT_4KB, new byte[0], ctEmptyAad));
         assertArrayEquals(
-            plaintext,
-            Sm4GcmHkdfStreamingAead.decryptBytes(IKM, SEGMENT_4KB, null, ctEmptyAad));
+                plaintext,
+                Sm4GcmHkdfStreamingAead.decryptBytes(IKM, SEGMENT_4KB, null, ctEmptyAad));
     }
 
     @Test
@@ -146,12 +147,12 @@ class Sm4GcmHkdfStreamingInteropTest {
 
         byte[] tinkCiphertext = tinkEncrypt(tink, plaintext, InteropFixtures.SAMPLE_AAD);
         assertThrows(Exception.class,
-            () -> Sm4GcmHkdfStreamingAead.decryptBytes(
-                IKM, SEGMENT_4KB, wrongAad, tinkCiphertext));
+                () -> Sm4GcmHkdfStreamingAead.decryptBytes(
+                        IKM, SEGMENT_4KB, wrongAad, tinkCiphertext));
 
         byte[] bcCiphertext =
-            Sm4GcmHkdfStreamingAead.encryptBytes(IKM, SEGMENT_4KB, InteropFixtures.SAMPLE_AAD,
-                plaintext);
+                Sm4GcmHkdfStreamingAead.encryptBytes(IKM, SEGMENT_4KB, InteropFixtures.SAMPLE_AAD,
+                        plaintext);
         assertThrows(Exception.class, () -> tinkDecrypt(tink, bcCiphertext, wrongAad));
     }
 
@@ -159,20 +160,20 @@ class Sm4GcmHkdfStreamingInteropTest {
     void tamperedCiphertextRejected() throws Exception {
         byte[] plaintext = randomData(20000, 13);
         byte[] ciphertext =
-            Sm4GcmHkdfStreamingAead.encryptBytes(IKM, SEGMENT_4KB, InteropFixtures.SAMPLE_AAD,
-                plaintext);
+                Sm4GcmHkdfStreamingAead.encryptBytes(IKM, SEGMENT_4KB, InteropFixtures.SAMPLE_AAD,
+                        plaintext);
         // 篡改中间一段密文。
         byte[] tampered = Arrays.copyOf(ciphertext, ciphertext.length);
         tampered[tampered.length / 2] ^= 1;
         assertThrows(Exception.class,
-            () -> Sm4GcmHkdfStreamingAead.decryptBytes(
-                IKM, SEGMENT_4KB, InteropFixtures.SAMPLE_AAD, tampered));
+                () -> Sm4GcmHkdfStreamingAead.decryptBytes(
+                        IKM, SEGMENT_4KB, InteropFixtures.SAMPLE_AAD, tampered));
 
         // 篡改 header 中的 salt。
         byte[] tamperedHeader = Arrays.copyOf(ciphertext, ciphertext.length);
         tamperedHeader[1] ^= 1;
         assertThrows(Exception.class,
-            () -> Sm4GcmHkdfStreamingAead.decryptBytes(
-                IKM, SEGMENT_4KB, InteropFixtures.SAMPLE_AAD, tamperedHeader));
+                () -> Sm4GcmHkdfStreamingAead.decryptBytes(
+                        IKM, SEGMENT_4KB, InteropFixtures.SAMPLE_AAD, tamperedHeader));
     }
 }

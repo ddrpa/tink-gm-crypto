@@ -3,9 +3,10 @@ package cc.ddrpa.crypto.tink.aead;
 import com.google.crypto.tink.aead.AeadParameters;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.Immutable;
+
+import javax.annotation.Nullable;
 import java.security.GeneralSecurityException;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 
 /**
@@ -54,14 +55,14 @@ public final class Sm4GcmParameters extends AeadParameters {
         }
         Sm4GcmParameters that = (Sm4GcmParameters) o;
         return that.getIvSizeBytes() == getIvSizeBytes()
-            && that.getTagSizeBytes() == getTagSizeBytes()
-            && that.getVariant() == getVariant();
+                && that.getTagSizeBytes() == getTagSizeBytes()
+                && that.getVariant() == getVariant();
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(Sm4GcmParameters.class, keySizeBytes, ivSizeBytes, tagSizeBytes,
-            variant);
+                variant);
     }
 
     @Override
@@ -72,14 +73,14 @@ public final class Sm4GcmParameters extends AeadParameters {
     @Override
     public String toString() {
         return "Sm4Gcm Parameters (variant: "
-            + variant
-            + ", "
-            + ivSizeBytes
-            + "-byte IV, "
-            + tagSizeBytes
-            + "-byte tag, and "
-            + keySizeBytes
-            + "-byte key)";
+                + variant
+                + ", "
+                + ivSizeBytes
+                + "-byte IV, "
+                + tagSizeBytes
+                + "-byte tag, and "
+                + keySizeBytes
+                + "-byte key)";
     }
 
     /**
@@ -92,7 +93,7 @@ public final class Sm4GcmParameters extends AeadParameters {
 
         public static final Sm4GcmParameters.Variant TINK = new Sm4GcmParameters.Variant("TINK");
         public static final Sm4GcmParameters.Variant NO_PREFIX = new Sm4GcmParameters.Variant(
-            "NO_PREFIX");
+                "NO_PREFIX");
 
         private final String name;
 
@@ -129,11 +130,11 @@ public final class Sm4GcmParameters extends AeadParameters {
          */
         @CanIgnoreReturnValue
         public Sm4GcmParameters.Builder setIvSizeBytes(int ivSizeBytes)
-            throws GeneralSecurityException {
+                throws GeneralSecurityException {
             if (ivSizeBytes <= 0) {
                 throw new GeneralSecurityException(
-                    String.format("Invalid IV size in bytes %d; IV size must be positive",
-                        ivSizeBytes));
+                        String.format("Invalid IV size in bytes %d; IV size must be positive",
+                                ivSizeBytes));
             }
             this.ivSizeBytes = ivSizeBytes;
             return this;
@@ -144,12 +145,12 @@ public final class Sm4GcmParameters extends AeadParameters {
          */
         @CanIgnoreReturnValue
         public Sm4GcmParameters.Builder setTagSizeBytes(int tagSizeBytes)
-            throws GeneralSecurityException {
+                throws GeneralSecurityException {
             if (tagSizeBytes < 12 || tagSizeBytes > 16) {
                 throw new GeneralSecurityException(
-                    String.format(
-                        "Invalid tag size in bytes %d; value must be between 12 and 16 bytes",
-                        tagSizeBytes));
+                        String.format(
+                                "Invalid tag size in bytes %d; value must be between 12 and 16 bytes",
+                                tagSizeBytes));
             }
             this.tagSizeBytes = tagSizeBytes;
             return this;

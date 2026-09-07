@@ -1,18 +1,16 @@
 package cc.ddrpa.crypto.tink.sm2.internal;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
-import java.math.BigInteger;
-import java.security.GeneralSecurityException;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.math.ec.ECPoint;
 import org.junit.jupiter.api.Test;
+
+import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link Sm2Curve} and {@link Sm2KeyUtil}.
@@ -44,11 +42,11 @@ class Sm2KeyUtilTest {
 
         ECPoint expected = Sm2Curve.getDomainParameters().getG().multiply(d).normalize();
         assertEquals(
-            expected.getAffineXCoord().toBigInteger(),
-            publicPoint.normalize().getAffineXCoord().toBigInteger());
+                expected.getAffineXCoord().toBigInteger(),
+                publicPoint.normalize().getAffineXCoord().toBigInteger());
         assertEquals(
-            expected.getAffineYCoord().toBigInteger(),
-            publicPoint.normalize().getAffineYCoord().toBigInteger());
+                expected.getAffineYCoord().toBigInteger(),
+                publicPoint.normalize().getAffineYCoord().toBigInteger());
     }
 
     @Test
@@ -56,7 +54,7 @@ class Sm2KeyUtilTest {
         ECPoint first = Sm2KeyUtil.getPublicKey(Sm2KeyUtil.generateKeyPair()).getQ().normalize();
         ECPoint second = Sm2KeyUtil.getPublicKey(Sm2KeyUtil.generateKeyPair()).getQ().normalize();
         // 连续两次生成的密钥对几乎不可能相同。
-        assertTrue(!first.equals(second));
+        assertFalse(first.equals(second));
     }
 
     @Test
@@ -68,34 +66,34 @@ class Sm2KeyUtilTest {
         assertEquals(2 * Sm2Curve.COORDINATE_SIZE_BYTES, encoded.length);
         ECPoint decoded = Sm2KeyUtil.decodePublicPoint(encoded);
         assertEquals(
-            publicPoint.normalize().getAffineXCoord().toBigInteger(),
-            decoded.getAffineXCoord().toBigInteger());
+                publicPoint.normalize().getAffineXCoord().toBigInteger(),
+                decoded.getAffineXCoord().toBigInteger());
         assertEquals(
-            publicPoint.normalize().getAffineYCoord().toBigInteger(),
-            decoded.getAffineYCoord().toBigInteger());
+                publicPoint.normalize().getAffineYCoord().toBigInteger(),
+                decoded.getAffineYCoord().toBigInteger());
 
         byte[] uncompressed = Sm2Curve.encodePoint(publicPoint);
         assertEquals(Sm2Curve.UNCOMPRESSED_POINT_SIZE, uncompressed.length);
         assertEquals(0x04, uncompressed[0] & 0xFF);
         ECPoint decodedUncompressed = Sm2Curve.decodePoint(uncompressed);
         assertEquals(
-            decoded.getAffineXCoord().toBigInteger(),
-            decodedUncompressed.getAffineXCoord().toBigInteger());
+                decoded.getAffineXCoord().toBigInteger(),
+                decodedUncompressed.getAffineXCoord().toBigInteger());
     }
 
     @Test
     void decodePublicPoint_rejectsWrongLengthAndOffCurvePoints() throws Exception {
         byte[] valid = Sm2Curve.encodePointWithoutPrefix(
-            Sm2KeyUtil.getPublicKey(Sm2KeyUtil.generateKeyPair()).getQ());
+                Sm2KeyUtil.getPublicKey(Sm2KeyUtil.generateKeyPair()).getQ());
         assertThrows(GeneralSecurityException.class, () -> Sm2KeyUtil.decodePublicPoint(new byte[63]));
         assertThrows(
-            GeneralSecurityException.class, () -> Sm2KeyUtil.decodePublicPoint(new byte[65]));
+                GeneralSecurityException.class, () -> Sm2KeyUtil.decodePublicPoint(new byte[65]));
 
         // 将 Y 坐标加 1（超出曲线）应被拒绝；若加 1 后恰好仍在曲线上（概率极低），换为异或 1。
         byte[] offCurve = valid.clone();
         offCurve[Sm2Curve.COORDINATE_SIZE_BYTES] ^= 1;
         assertThrows(
-            GeneralSecurityException.class, () -> Sm2KeyUtil.decodePublicPoint(offCurve));
+                GeneralSecurityException.class, () -> Sm2KeyUtil.decodePublicPoint(offCurve));
     }
 
     @Test
@@ -106,16 +104,16 @@ class Sm2KeyUtilTest {
 
         // d = n 越界。
         byte[] n = Sm2KeyUtil.toFixedLengthBytes(Sm2Curve.getDomainParameters().getN(),
-            Sm2Curve.COORDINATE_SIZE_BYTES);
+                Sm2Curve.COORDINATE_SIZE_BYTES);
         assertThrows(GeneralSecurityException.class, () -> Sm2KeyUtil.validatePrivateScalar(n));
 
         // d = n - 1 合法。
         byte[] nMinusOne = Sm2KeyUtil.toFixedLengthBytes(
-            Sm2Curve.getDomainParameters().getN().subtract(BigInteger.ONE),
-            Sm2Curve.COORDINATE_SIZE_BYTES);
+                Sm2Curve.getDomainParameters().getN().subtract(BigInteger.ONE),
+                Sm2Curve.COORDINATE_SIZE_BYTES);
         assertEquals(
-            Sm2Curve.getDomainParameters().getN().subtract(BigInteger.ONE),
-            Sm2KeyUtil.validatePrivateScalar(nMinusOne));
+                Sm2Curve.getDomainParameters().getN().subtract(BigInteger.ONE),
+                Sm2KeyUtil.validatePrivateScalar(nMinusOne));
 
         // d = 1 合法。
         byte[] one = new byte[Sm2Curve.COORDINATE_SIZE_BYTES];
@@ -124,11 +122,11 @@ class Sm2KeyUtilTest {
 
         // 长度错误。
         assertThrows(
-            GeneralSecurityException.class,
-            () -> Sm2KeyUtil.validatePrivateScalar(new byte[31]));
+                GeneralSecurityException.class,
+                () -> Sm2KeyUtil.validatePrivateScalar(new byte[31]));
         assertThrows(
-            GeneralSecurityException.class,
-            () -> Sm2KeyUtil.validatePrivateScalar(new byte[33]));
+                GeneralSecurityException.class,
+                () -> Sm2KeyUtil.validatePrivateScalar(new byte[33]));
     }
 
     @Test
@@ -140,14 +138,14 @@ class Sm2KeyUtilTest {
 
         byte[] max = Sm2KeyUtil.toFixedLengthBytes(BigInteger.ONE.shiftLeft(256).subtract(BigInteger.ONE), 32);
         assertEquals(32, max.length);
-        assertArrayEquals(new byte[] {(byte) 0xFF}, new byte[] {max[0]});
+        assertArrayEquals(new byte[]{(byte) 0xFF}, new byte[]{max[0]});
 
         assertThrows(
-            GeneralSecurityException.class,
-            () -> Sm2KeyUtil.toFixedLengthBytes(BigInteger.ONE.shiftLeft(256), 32));
+                GeneralSecurityException.class,
+                () -> Sm2KeyUtil.toFixedLengthBytes(BigInteger.ONE.shiftLeft(256), 32));
         assertThrows(
-            GeneralSecurityException.class,
-            () -> Sm2KeyUtil.toFixedLengthBytes(BigInteger.valueOf(-1), 32));
+                GeneralSecurityException.class,
+                () -> Sm2KeyUtil.toFixedLengthBytes(BigInteger.valueOf(-1), 32));
     }
 
     @Test
@@ -158,8 +156,8 @@ class Sm2KeyUtilTest {
         assertEquals(BigInteger.valueOf(42), params.getD());
 
         ECPublicKeyParameters pubParams = Sm2KeyUtil.toPublicKeyParameters(
-            Sm2Curve.encodePointWithoutPrefix(
-                Sm2KeyUtil.getPublicKey(Sm2KeyUtil.generateKeyPair()).getQ()));
+                Sm2Curve.encodePointWithoutPrefix(
+                        Sm2KeyUtil.getPublicKey(Sm2KeyUtil.generateKeyPair()).getQ()));
         Sm2Curve.validatePublicPoint(pubParams.getQ());
     }
 

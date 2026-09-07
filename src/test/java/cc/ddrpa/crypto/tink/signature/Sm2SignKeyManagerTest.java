@@ -1,30 +1,10 @@
 package cc.ddrpa.crypto.tink.signature;
 
-import static com.google.common.truth.Truth.assertThat;
-import static java.nio.charset.StandardCharsets.US_ASCII;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import cc.ddrpa.crypto.tink.sm2.internal.Sm2Curve;
 import cc.ddrpa.crypto.tink.sm2.internal.Sm2KeyUtil;
-import com.google.crypto.tink.CleartextKeysetHandle;
-import com.google.crypto.tink.InsecureSecretKeyAccess;
-import com.google.crypto.tink.JsonKeysetReader;
-import com.google.crypto.tink.JsonKeysetWriter;
-import com.google.crypto.tink.KeysetHandle;
-import com.google.crypto.tink.PublicKeySign;
-import com.google.crypto.tink.PublicKeyVerify;
-import com.google.crypto.tink.RegistryConfiguration;
+import com.google.crypto.tink.*;
 import com.google.crypto.tink.internal.KeyManagerRegistry;
 import com.google.crypto.tink.signature.SignatureConfig;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
@@ -36,6 +16,20 @@ import org.bouncycastle.math.ec.ECPoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.math.BigInteger;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
+
+import static com.google.common.truth.Truth.assertThat;
+import static java.nio.charset.StandardCharsets.US_ASCII;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 /**
  * Test for Sm2SignKeyManager and Sm2VerifyKeyManager.
  */
@@ -43,6 +37,13 @@ class Sm2SignKeyManagerTest {
 
     // The default SM2 user ID, see GB/T 32918.2.
     private static final byte[] USER_ID = "1234567812345678".getBytes(US_ASCII);
+
+    private static byte[] concat(byte[] a, byte[] b) {
+        byte[] result = new byte[a.length + b.length];
+        System.arraycopy(a, 0, result, 0, a.length);
+        System.arraycopy(b, 0, result, a.length, b.length);
+        return result;
+    }
 
     @BeforeEach
     void register() throws Exception {
@@ -52,30 +53,23 @@ class Sm2SignKeyManagerTest {
         SignatureConfig.register();
     }
 
-    private static byte[] concat(byte[] a, byte[] b) {
-        byte[] result = new byte[a.length + b.length];
-        System.arraycopy(a, 0, result, 0, a.length);
-        System.arraycopy(b, 0, result, a.length, b.length);
-        return result;
-    }
-
     @Test
     void testKeyManagersRegistered() throws Exception {
         assertThat(KeyManagerRegistry.globalInstance()
-            .getKeyManager(Sm2SignKeyManager.getKeyType(), PublicKeySign.class)).isNotNull();
+                .getKeyManager(Sm2SignKeyManager.getKeyType(), PublicKeySign.class)).isNotNull();
         assertThat(KeyManagerRegistry.globalInstance()
-            .getKeyManager(Sm2VerifyKeyManager.getKeyType(), PublicKeyVerify.class)).isNotNull();
+                .getKeyManager(Sm2VerifyKeyManager.getKeyType(), PublicKeyVerify.class)).isNotNull();
     }
 
     @Test
     void signVerifyRoundTripThroughKeysetHandle() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
         PublicKeySign signer =
-            privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
+                privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
         KeysetHandle publicHandle = privateHandle.getPublicKeysetHandle();
         PublicKeyVerify verifier =
-            publicHandle.getPrimitive(RegistryConfiguration.get(), PublicKeyVerify.class);
+                publicHandle.getPrimitive(RegistryConfiguration.get(), PublicKeyVerify.class);
 
         String[] messages = {"hello sm2", "some longer message to be signed", ""};
         for (String message : messages) {
@@ -89,12 +83,12 @@ class Sm2SignKeyManagerTest {
     @Test
     void tamperedSignatureAndWrongDataDoNotVerify() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
         PublicKeySign signer =
-            privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
+                privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
         PublicKeyVerify verifier =
-            privateHandle.getPublicKeysetHandle().getPrimitive(
-                RegistryConfiguration.get(), PublicKeyVerify.class);
+                privateHandle.getPublicKeysetHandle().getPrimitive(
+                        RegistryConfiguration.get(), PublicKeyVerify.class);
 
         byte[] data = "message".getBytes(UTF_8);
         byte[] signature = signer.sign(data);
@@ -110,14 +104,14 @@ class Sm2SignKeyManagerTest {
     @Test
     void tinkSignaturesArePrefixedWithKeyId() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
         int id = privateHandle.getAt(0).getId();
         Sm2SignaturePrivateKey privateKey =
-            (Sm2SignaturePrivateKey) privateHandle.getAt(0).getKey();
+                (Sm2SignaturePrivateKey) privateHandle.getAt(0).getKey();
         assertThat(privateKey.getIdRequirementOrNull()).isEqualTo(id);
 
         PublicKeySign signer =
-            privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
+                privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
         byte[] signature = signer.sign("message".getBytes(UTF_8));
 
         // TINK prefix: 0x01 followed by the 4-byte big-endian key id, then a raw 64-byte
@@ -126,19 +120,19 @@ class Sm2SignKeyManagerTest {
         assertThat(signature[0]).isEqualTo((byte) 1);
         assertThat(Arrays.copyOf(signature, 5)).isEqualTo(privateKey.getOutputPrefix().toByteArray());
         assertThat(signature).isEqualTo(
-            concat(privateKey.getOutputPrefix().toByteArray(),
-                Arrays.copyOfRange(signature, 5, signature.length)));
+                concat(privateKey.getOutputPrefix().toByteArray(),
+                        Arrays.copyOfRange(signature, 5, signature.length)));
     }
 
     @Test
     void rawSignaturesHaveNoPrefix() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2SignKeyManager.rawSm2SignTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2SignKeyManager.rawSm2SignTemplate().toParameters());
         PublicKeySign signer =
-            privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
+                privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
         PublicKeyVerify verifier =
-            privateHandle.getPublicKeysetHandle().getPrimitive(
-                RegistryConfiguration.get(), PublicKeyVerify.class);
+                privateHandle.getPublicKeysetHandle().getPrimitive(
+                        RegistryConfiguration.get(), PublicKeyVerify.class);
 
         byte[] data = "hello sm2".getBytes(UTF_8);
         byte[] signature = signer.sign(data);
@@ -150,38 +144,38 @@ class Sm2SignKeyManagerTest {
     @Test
     void rawVerifyRejectsMalformedSignatures() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2SignKeyManager.rawSm2SignTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2SignKeyManager.rawSm2SignTemplate().toParameters());
         PublicKeyVerify verifier =
-            privateHandle.getPublicKeysetHandle().getPrimitive(
-                RegistryConfiguration.get(), PublicKeyVerify.class);
+                privateHandle.getPublicKeysetHandle().getPrimitive(
+                        RegistryConfiguration.get(), PublicKeyVerify.class);
 
         byte[] data = "hello sm2".getBytes(UTF_8);
         // All-zero signature.
         assertThrows(GeneralSecurityException.class,
-            () -> verifier.verify(new byte[64], data));
+                () -> verifier.verify(new byte[64], data));
         // Signature of wrong length.
         assertThrows(GeneralSecurityException.class,
-            () -> verifier.verify(new byte[32], data));
+                () -> verifier.verify(new byte[32], data));
         assertThrows(GeneralSecurityException.class,
-            () -> verifier.verify(new byte[65], data));
+                () -> verifier.verify(new byte[65], data));
     }
 
     @Test
     void rawSignaturesInteroperateWithBouncyCastle() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2SignKeyManager.rawSm2SignTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2SignKeyManager.rawSm2SignTemplate().toParameters());
         Sm2SignaturePrivateKey privateKey =
-            (Sm2SignaturePrivateKey) privateHandle.getAt(0).getKey();
+                (Sm2SignaturePrivateKey) privateHandle.getAt(0).getKey();
         byte[] d = privateKey.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get());
         byte[] q = privateKey.getPublicKey().getPublicKey().toByteArray();
         assertThat(d.length).isEqualTo(32);
         assertThat(q.length).isEqualTo(64);
 
         PublicKeySign signer =
-            privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
+                privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
         PublicKeyVerify verifier =
-            privateHandle.getPublicKeysetHandle().getPrimitive(
-                RegistryConfiguration.get(), PublicKeyVerify.class);
+                privateHandle.getPublicKeysetHandle().getPrimitive(
+                        RegistryConfiguration.get(), PublicKeyVerify.class);
 
         byte[] message = "hello sm2".getBytes(UTF_8);
 
@@ -190,11 +184,11 @@ class Sm2SignKeyManagerTest {
         byte[] ourSignature = signer.sign(message);
         assertThat(ourSignature.length).isEqualTo(64);
         ECPoint derivedPoint =
-            Sm2Curve.validatePublicPoint(
-                Sm2Curve.getDomainParameters().getG().multiply(new BigInteger(1, d)).normalize());
+                Sm2Curve.validatePublicPoint(
+                        Sm2Curve.getDomainParameters().getG().multiply(new BigInteger(1, d)).normalize());
         assertThat(Sm2Curve.encodePointWithoutPrefix(derivedPoint)).isEqualTo(q);
         ECPublicKeyParameters derivedPublicParams =
-            new ECPublicKeyParameters(derivedPoint, Sm2Curve.getDomainParameters());
+                new ECPublicKeyParameters(derivedPoint, Sm2Curve.getDomainParameters());
         SM2Signer bcVerifier = new SM2Signer(new PlainDSAEncoding(), new SM3Digest());
         bcVerifier.init(false, new ParametersWithID(derivedPublicParams, USER_ID));
         bcVerifier.update(message, 0, message.length);
@@ -205,10 +199,10 @@ class Sm2SignKeyManagerTest {
         ECPrivateKeyParameters privateKeyParams = Sm2KeyUtil.toPrivateKeyParameters(d);
         SM2Signer bcSigner = new SM2Signer(new PlainDSAEncoding(), new SM3Digest());
         bcSigner.init(
-            true,
-            new ParametersWithID(
-                new ParametersWithRandom(privateKeyParams, Sm2KeyUtil.getSecureRandom()),
-                USER_ID));
+                true,
+                new ParametersWithID(
+                        new ParametersWithRandom(privateKeyParams, Sm2KeyUtil.getSecureRandom()),
+                        USER_ID));
         bcSigner.update(message, 0, message.length);
         byte[] bcSignature = bcSigner.generateSignature();
         assertThat(bcSignature.length).isEqualTo(64);
@@ -218,30 +212,30 @@ class Sm2SignKeyManagerTest {
     @Test
     void twoKeyKeysetWorks() throws Exception {
         KeysetHandle keyAHandle =
-            KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
         KeysetHandle keyBHandle =
-            KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
         // Extremely unlikely, but make sure the two keys have different ids (hence different
         // prefixes).
         while (keyBHandle.getAt(0).getId() == keyAHandle.getAt(0).getId()) {
             keyBHandle =
-                KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
+                    KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
         }
         Sm2SignaturePrivateKey keyA = (Sm2SignaturePrivateKey) keyAHandle.getAt(0).getKey();
         Sm2SignaturePrivateKey keyB = (Sm2SignaturePrivateKey) keyBHandle.getAt(0).getKey();
 
         KeysetHandle twoKeyHandle =
-            KeysetHandle.newBuilder()
-                .addEntry(KeysetHandle.importKey(keyA).makePrimary())
-                .addEntry(KeysetHandle.importKey(keyB))
-                .build();
+                KeysetHandle.newBuilder()
+                        .addEntry(KeysetHandle.importKey(keyA).makePrimary())
+                        .addEntry(KeysetHandle.importKey(keyB))
+                        .build();
         assertThat(twoKeyHandle.size()).isEqualTo(2);
 
         PublicKeySign signer =
-            twoKeyHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
+                twoKeyHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
         PublicKeyVerify verifier =
-            twoKeyHandle.getPublicKeysetHandle().getPrimitive(
-                RegistryConfiguration.get(), PublicKeyVerify.class);
+                twoKeyHandle.getPublicKeysetHandle().getPrimitive(
+                        RegistryConfiguration.get(), PublicKeyVerify.class);
 
         // Signing always uses the primary key (keyA).
         String[] messages = {"first message", "second message", ""};
@@ -250,7 +244,7 @@ class Sm2SignKeyManagerTest {
             byte[] signature = signer.sign(data);
             assertThat(signature.length).isEqualTo(5 + 64);
             assertThat(Arrays.copyOf(signature, 5))
-                .isEqualTo(keyA.getOutputPrefix().toByteArray());
+                    .isEqualTo(keyA.getOutputPrefix().toByteArray());
             verifier.verify(signature, data);
         }
 
@@ -258,23 +252,23 @@ class Sm2SignKeyManagerTest {
         // (dispatched via the key prefix)...
         byte[] data = "prefix dispatch sanity".getBytes(UTF_8);
         PublicKeySign keyBSigner =
-            keyBHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
+                keyBHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
         byte[] keyBSignature = keyBSigner.sign(data);
         verifier.verify(keyBSignature, data);
         // ... but do not verify with a public handle which only contains keyA.
         PublicKeyVerify keyAVerifier =
-            keyAHandle.getPublicKeysetHandle().getPrimitive(
-                RegistryConfiguration.get(), PublicKeyVerify.class);
+                keyAHandle.getPublicKeysetHandle().getPrimitive(
+                        RegistryConfiguration.get(), PublicKeyVerify.class);
         assertThrows(GeneralSecurityException.class,
-            () -> keyAVerifier.verify(keyBSignature, data));
+                () -> keyAVerifier.verify(keyBSignature, data));
     }
 
     @Test
     void jsonKeysetRoundTripWorks() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2SignKeyManager.sm2SignTemplate().toParameters());
         PublicKeySign originalSigner =
-            privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
+                privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
         byte[] message = "hello sm2".getBytes(UTF_8);
         byte[] originalSignature = originalSigner.sign(message);
 
@@ -290,15 +284,15 @@ class Sm2SignKeyManagerTest {
             KeysetHandle parsedPrivateHandle;
             try (InputStream in = Files.newInputStream(privateFile)) {
                 parsedPrivateHandle =
-                    CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(in));
+                        CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(in));
             }
             assertTrue(parsedPrivateHandle.getAt(0).getKey().equalsKey(
-                privateHandle.getAt(0).getKey()));
+                    privateHandle.getAt(0).getKey()));
             PublicKeySign parsedSigner = parsedPrivateHandle.getPrimitive(
-                RegistryConfiguration.get(), PublicKeySign.class);
+                    RegistryConfiguration.get(), PublicKeySign.class);
             PublicKeyVerify parsedPrivateVerifier =
-                parsedPrivateHandle.getPublicKeysetHandle().getPrimitive(
-                    RegistryConfiguration.get(), PublicKeyVerify.class);
+                    parsedPrivateHandle.getPublicKeysetHandle().getPrimitive(
+                            RegistryConfiguration.get(), PublicKeyVerify.class);
             byte[] parsedSignature = parsedSigner.sign(message);
             parsedPrivateVerifier.verify(parsedSignature, message);
 
@@ -315,10 +309,10 @@ class Sm2SignKeyManagerTest {
             KeysetHandle parsedPublicHandle;
             try (InputStream in = Files.newInputStream(publicFile)) {
                 parsedPublicHandle =
-                    CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(in));
+                        CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(in));
             }
             PublicKeyVerify publicVerifier = parsedPublicHandle.getPrimitive(
-                RegistryConfiguration.get(), PublicKeyVerify.class);
+                    RegistryConfiguration.get(), PublicKeyVerify.class);
             publicVerifier.verify(originalSignature, message);
             publicVerifier.verify(parsedSignature, message);
         } finally {

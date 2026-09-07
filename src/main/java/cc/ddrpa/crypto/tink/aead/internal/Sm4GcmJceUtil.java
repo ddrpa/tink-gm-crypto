@@ -2,15 +2,16 @@ package cc.ddrpa.crypto.tink.aead.internal;
 
 import com.google.crypto.tink.internal.Util;
 import com.google.crypto.tink.subtle.EngineFactory;
-import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.spec.AlgorithmParameterSpec;
+
 import javax.annotation.Nullable;
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import java.security.GeneralSecurityException;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.spec.AlgorithmParameterSpec;
 
 /**
  * Helper functions for SM4-GCM using JCE.
@@ -22,13 +23,13 @@ public final class Sm4GcmJceUtil {
     public static final int TAG_SIZE_IN_BYTES = 16;
 
     private static final ThreadLocal<Cipher> localCipher =
-        ThreadLocal.withInitial(() -> {
-            try {
-                return EngineFactory.CIPHER.getInstance("SM4/GCM/NoPadding");
-            } catch (GeneralSecurityException ex) {
-                throw new IllegalStateException(ex);
-            }
-        });
+            ThreadLocal.withInitial(() -> {
+                try {
+                    return EngineFactory.CIPHER.getInstance("SM4/GCM/NoPadding");
+                } catch (GeneralSecurityException ex) {
+                    throw new IllegalStateException(ex);
+                }
+            });
 
     private Sm4GcmJceUtil() {
     }
@@ -43,8 +44,8 @@ public final class Sm4GcmJceUtil {
     public static SecretKey getSecretKey(final byte[] key) throws GeneralSecurityException {
         if (key.length != 16) {
             throw new InvalidAlgorithmParameterException(
-                String.format("invalid key size %d; only 128-bit SM4 keys are supported",
-                    key.length * 8));
+                    String.format("invalid key size %d; only 128-bit SM4 keys are supported",
+                            key.length * 8));
         }
         return new SecretKeySpec(key, "SM4");
     }

@@ -1,18 +1,15 @@
 package cc.ddrpa.interop.bc;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.util.Arrays;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
 import javax.crypto.spec.GCMParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import java.io.*;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.util.Arrays;
 
 /**
  * 对方侧（不使用 Google Tink）的 SM4-GCM-HKDF <strong>流式 AEAD</strong> 参考实现
@@ -46,47 +43,53 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
  */
 public final class Sm4GcmHkdfStreamingAead {
 
+    /**
+     * 派生数据密钥/header salt 长度。
+     */
+    public static final int KEY_SIZE_BYTES = 16;
+    /**
+     * header 中 nonce 前缀长度。
+     */
+    public static final int NONCE_PREFIX_SIZE_BYTES = 7;
+    /**
+     * header 总长：headerLength(1) + salt(16) + noncePrefix(7)。
+     */
+    public static final int HEADER_LENGTH = 1 + KEY_SIZE_BYTES + NONCE_PREFIX_SIZE_BYTES;
+    /**
+     * 每段 GCM tag 长度。
+     */
+    public static final int TAG_SIZE_BYTES = 16;
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
     private Sm4GcmHkdfStreamingAead() {
     }
 
-    /** 派生数据密钥/header salt 长度。 */
-    public static final int KEY_SIZE_BYTES = 16;
-    /** header 中 nonce 前缀长度。 */
-    public static final int NONCE_PREFIX_SIZE_BYTES = 7;
-    /** header 总长：headerLength(1) + salt(16) + noncePrefix(7)。 */
-    public static final int HEADER_LENGTH = 1 + KEY_SIZE_BYTES + NONCE_PREFIX_SIZE_BYTES;
-    /** 每段 GCM tag 长度。 */
-    public static final int TAG_SIZE_BYTES = 16;
-
-    private static final SecureRandom RANDOM = new SecureRandom();
-    private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
-
     private static void checkParameters(byte[] ikm, int ciphertextSegmentSize)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         if (ikm == null || ikm.length < 16 || ikm.length < KEY_SIZE_BYTES) {
             throw new GeneralSecurityException(
-                "ikm must be at least " + KEY_SIZE_BYTES + " bytes");
+                    "ikm must be at least " + KEY_SIZE_BYTES + " bytes");
         }
         if (ciphertextSegmentSize <= HEADER_LENGTH + TAG_SIZE_BYTES + 16) {
             throw new GeneralSecurityException(
-                "ciphertextSegmentSize must be larger than " + (HEADER_LENGTH + TAG_SIZE_BYTES + 16));
+                    "ciphertextSegmentSize must be larger than " + (HEADER_LENGTH + TAG_SIZE_BYTES + 16));
         }
     }
 
     /**
      * 流式加密：把 {@code plaintext} 的内容加密写入 {@code ciphertext}（header + 分段密文）。
      *
-     * @param ikm 初始密钥材料（≥ 16 字节；本库模板为 16 字节 SM4 密钥）
+     * @param ikm                   初始密钥材料（≥ 16 字节；本库模板为 16 字节 SM4 密钥）
      * @param ciphertextSegmentSize 密文段大小（本库 4KB/1MB 模板分别为 4096 / 1048576）
-     * @param associatedData 关联数据（绑定整份密文，解密需相同；null 与空数组等价）
+     * @param associatedData        关联数据（绑定整份密文，解密需相同；null 与空数组等价）
      */
     public static void encrypt(
-        byte[] ikm,
-        int ciphertextSegmentSize,
-        byte[] associatedData,
-        InputStream plaintext,
-        OutputStream ciphertext)
-        throws GeneralSecurityException, IOException {
+            byte[] ikm,
+            int ciphertextSegmentSize,
+            byte[] associatedData,
+            InputStream plaintext,
+            OutputStream ciphertext)
+            throws GeneralSecurityException, IOException {
         checkParameters(ikm, ciphertextSegmentSize);
         byte[] aad = associatedData == null ? new byte[0] : associatedData;
 
@@ -145,12 +148,12 @@ public final class Sm4GcmHkdfStreamingAead {
      * <p>解密失败的段（tag 校验失败、header 非法等）抛出 {@link GeneralSecurityException}。
      */
     public static void decrypt(
-        byte[] ikm,
-        int ciphertextSegmentSize,
-        byte[] associatedData,
-        InputStream ciphertext,
-        OutputStream plaintext)
-        throws GeneralSecurityException, IOException {
+            byte[] ikm,
+            int ciphertextSegmentSize,
+            byte[] associatedData,
+            InputStream ciphertext,
+            OutputStream plaintext)
+            throws GeneralSecurityException, IOException {
         checkParameters(ikm, ciphertextSegmentSize);
         byte[] aad = associatedData == null ? new byte[0] : associatedData;
 
@@ -165,7 +168,7 @@ public final class Sm4GcmHkdfStreamingAead {
         }
         byte[] salt = Arrays.copyOfRange(header, 1, 1 + KEY_SIZE_BYTES);
         byte[] noncePrefix = Arrays.copyOfRange(
-            header, 1 + KEY_SIZE_BYTES, HEADER_LENGTH);
+                header, 1 + KEY_SIZE_BYTES, HEADER_LENGTH);
         byte[] segmentKey = hkdfSha256(ikm, salt, aad, KEY_SIZE_BYTES);
 
         // 2. 逐段解密：segment_0 密文长 C-24，其后每段 C；段内读到 EOF 则该段为最后一段。
@@ -201,7 +204,7 @@ public final class Sm4GcmHkdfStreamingAead {
                 throw new GeneralSecurityException("Ciphertext is truncated");
             }
             byte[] plainSegment = gcmDecryptSegment(
-                segmentKey, noncePrefix, segmentNr, isLast, segment, got);
+                    segmentKey, noncePrefix, segmentNr, isLast, segment, got);
             plaintext.write(plainSegment);
             segmentNr++;
             if (isLast) {
@@ -211,35 +214,41 @@ public final class Sm4GcmHkdfStreamingAead {
         }
     }
 
-    /** 字节数组便捷方法：加密整段明文。 */
+    /**
+     * 字节数组便捷方法：加密整段明文。
+     */
     public static byte[] encryptBytes(
-        byte[] ikm, int ciphertextSegmentSize, byte[] associatedData, byte[] plaintext)
-        throws GeneralSecurityException, IOException {
+            byte[] ikm, int ciphertextSegmentSize, byte[] associatedData, byte[] plaintext)
+            throws GeneralSecurityException, IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         encrypt(
-            ikm,
-            ciphertextSegmentSize,
-            associatedData,
-            new ByteArrayInputStream(plaintext),
-            out);
+                ikm,
+                ciphertextSegmentSize,
+                associatedData,
+                new ByteArrayInputStream(plaintext),
+                out);
         return out.toByteArray();
     }
 
-    /** 字节数组便捷方法：解密整段密文。 */
+    /**
+     * 字节数组便捷方法：解密整段密文。
+     */
     public static byte[] decryptBytes(
-        byte[] ikm, int ciphertextSegmentSize, byte[] associatedData, byte[] ciphertext)
-        throws GeneralSecurityException, IOException {
+            byte[] ikm, int ciphertextSegmentSize, byte[] associatedData, byte[] ciphertext)
+            throws GeneralSecurityException, IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         decrypt(
-            ikm,
-            ciphertextSegmentSize,
-            associatedData,
-            new ByteArrayInputStream(ciphertext),
-            out);
+                ikm,
+                ciphertextSegmentSize,
+                associatedData,
+                new ByteArrayInputStream(ciphertext),
+                out);
         return out.toByteArray();
     }
 
-    /** @return 与 Tink 侧 {@code expectedCiphertextSize} 一致的理论密文总长（含 header）。 */
+    /**
+     * @return 与 Tink 侧 {@code expectedCiphertextSize} 一致的理论密文总长（含 header）。
+     */
     public static long ciphertextSize(long plaintextSize, int ciphertextSegmentSize) {
         int plaintextSegmentSize = ciphertextSegmentSize - TAG_SIZE_BYTES;
         long offset = HEADER_LENGTH;
@@ -253,41 +262,43 @@ public final class Sm4GcmHkdfStreamingAead {
     }
 
     private static void writeSegment(
-        byte[] segmentKey,
-        byte[] noncePrefix,
-        long segmentNr,
-        boolean isLast,
-        byte[] plaintext,
-        int plaintextLen,
-        OutputStream ciphertext)
-        throws GeneralSecurityException, IOException {
+            byte[] segmentKey,
+            byte[] noncePrefix,
+            long segmentNr,
+            boolean isLast,
+            byte[] plaintext,
+            int plaintextLen,
+            OutputStream ciphertext)
+            throws GeneralSecurityException, IOException {
         Cipher cipher = Cipher.getInstance("SM4/GCM/NoPadding", BC_PROVIDER);
         cipher.init(
-            Cipher.ENCRYPT_MODE,
-            new SecretKeySpec(segmentKey, "SM4"),
-            new GCMParameterSpec(8 * TAG_SIZE_BYTES, makeNonce(noncePrefix, segmentNr, isLast)));
+                Cipher.ENCRYPT_MODE,
+                new SecretKeySpec(segmentKey, "SM4"),
+                new GCMParameterSpec(8 * TAG_SIZE_BYTES, makeNonce(noncePrefix, segmentNr, isLast)));
         ciphertext.write(cipher.doFinal(plaintext, 0, plaintextLen));
     }
 
     private static byte[] gcmDecryptSegment(
-        byte[] segmentKey,
-        byte[] noncePrefix,
-        long segmentNr,
-        boolean isLast,
-        byte[] ciphertextSegment,
-        int segmentLen)
-        throws GeneralSecurityException {
+            byte[] segmentKey,
+            byte[] noncePrefix,
+            long segmentNr,
+            boolean isLast,
+            byte[] ciphertextSegment,
+            int segmentLen)
+            throws GeneralSecurityException {
         Cipher cipher = Cipher.getInstance("SM4/GCM/NoPadding", BC_PROVIDER);
         cipher.init(
-            Cipher.DECRYPT_MODE,
-            new SecretKeySpec(segmentKey, "SM4"),
-            new GCMParameterSpec(
-                8 * TAG_SIZE_BYTES, makeNonce(noncePrefix, segmentNr, isLast)));
+                Cipher.DECRYPT_MODE,
+                new SecretKeySpec(segmentKey, "SM4"),
+                new GCMParameterSpec(
+                        8 * TAG_SIZE_BYTES, makeNonce(noncePrefix, segmentNr, isLast)));
         byte[] plaintext = cipher.doFinal(ciphertextSegment, 0, segmentLen);
         return Arrays.copyOf(plaintext, plaintext.length);
     }
 
-    /** nonce = noncePrefix(7) ‖ u32be(segmentNr) ‖ last。 */
+    /**
+     * nonce = noncePrefix(7) ‖ u32be(segmentNr) ‖ last。
+     */
     private static byte[] makeNonce(byte[] noncePrefix, long segmentNr, boolean isLast) {
         if (segmentNr >= (1L << 32)) {
             throw new IllegalStateException("Too many segments: 32 bit segment counter overflow");
@@ -302,9 +313,11 @@ public final class Sm4GcmHkdfStreamingAead {
         return nonce;
     }
 
-    /** RFC 5869 HKDF 使用 HMAC-SHA256，输出 {@code length} 字节。 */
+    /**
+     * RFC 5869 HKDF 使用 HMAC-SHA256，输出 {@code length} 字节。
+     */
     private static byte[] hkdfSha256(byte[] ikm, byte[] salt, byte[] info, int length)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         Mac mac = Mac.getInstance("HmacSHA256");
         // extract
         mac.init(new SecretKeySpec(salt, "HmacSHA256"));
@@ -323,12 +336,14 @@ public final class Sm4GcmHkdfStreamingAead {
             expand.update((byte) i);
             t = expand.doFinal();
             System.arraycopy(t, 0, output, (i - 1) * blockSize,
-                Math.min(blockSize, length - (i - 1) * blockSize));
+                    Math.min(blockSize, length - (i - 1) * blockSize));
         }
         return output;
     }
 
-    /** 尽力读取 {@code len} 字节，返回实际读取字节数（遇 EOF 提前返回）。 */
+    /**
+     * 尽力读取 {@code len} 字节，返回实际读取字节数（遇 EOF 提前返回）。
+     */
     private static int readUpTo(InputStream in, byte[] buf, int len) throws IOException {
         int read = 0;
         while (read < len) {

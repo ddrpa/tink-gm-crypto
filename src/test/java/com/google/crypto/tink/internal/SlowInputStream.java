@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
 
 package com.google.crypto.tink.internal;
 
@@ -25,41 +25,41 @@ import java.util.Arrays;
  * only.
  */
 public final class SlowInputStream extends InputStream {
-  private final byte[] result;
-  private int pos = 0;
+    private final byte[] result;
+    private int pos = 0;
 
-  private SlowInputStream(byte[] b) {
-    result = b;
-  }
-
-  public static SlowInputStream copyFrom(byte[] b) {
-    return new SlowInputStream(Arrays.copyOf(b, b.length));
-  }
-
-  @Override
-  public int read() throws IOException {
-    if (pos >= result.length) {
-      return -1;
+    private SlowInputStream(byte[] b) {
+        result = b;
     }
-    int r = result[pos] & 0xFF;
-    pos++;
-    return r;
-  }
 
-  /**
-   * We override this because the default always fills b[] but this is not guaranteed by the
-   * interface.
-   */
-  @Override
-  public int read(byte[] b, int off, int len) throws IOException {
-    if (len == 0) {
-      return 0;
+    public static SlowInputStream copyFrom(byte[] b) {
+        return new SlowInputStream(Arrays.copyOf(b, b.length));
     }
-    int result = read();
-    if (result == -1) {
-      return -1;
+
+    @Override
+    public int read() throws IOException {
+        if (pos >= result.length) {
+            return -1;
+        }
+        int r = result[pos] & 0xFF;
+        pos++;
+        return r;
     }
-    b[off] = (byte) result;
-    return 1;
-  }
+
+    /**
+     * We override this because the default always fills b[] but this is not guaranteed by the
+     * interface.
+     */
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        if (len == 0) {
+            return 0;
+        }
+        int result = read();
+        if (result == -1) {
+            return -1;
+        }
+        b[off] = (byte) result;
+        return 1;
+    }
 }

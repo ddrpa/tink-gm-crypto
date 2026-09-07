@@ -1,12 +1,11 @@
 package cc.ddrpa.playground;
 
 import cc.ddrpa.crypto.tink.streamingaead.Sm4GcmHkdfStreamingKeyManager;
-import com.google.crypto.tink.CleartextKeysetHandle;
-import com.google.crypto.tink.JsonKeysetReader;
-import com.google.crypto.tink.KeysetHandle;
-import com.google.crypto.tink.RegistryConfiguration;
-import com.google.crypto.tink.StreamingAead;
+import com.google.crypto.tink.*;
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -18,8 +17,6 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.security.GeneralSecurityException;
 import java.time.LocalDateTime;
-import org.junit.BeforeClass;
-import org.junit.Test;
 
 public class UseStreamingAEAD {
 
@@ -37,9 +34,9 @@ public class UseStreamingAEAD {
         // 加载密钥集
         try (InputStream ins = new FileInputStream("streaming_aead_keyset.json")) {
             KeysetHandle keysetHandle = CleartextKeysetHandle.read(
-                JsonKeysetReader.withInputStream(ins));
+                    JsonKeysetReader.withInputStream(ins));
             streamingAead = keysetHandle.getPrimitive(RegistryConfiguration.get(),
-                StreamingAead.class);
+                    StreamingAead.class);
         }
     }
 
@@ -48,10 +45,10 @@ public class UseStreamingAEAD {
         byte[] associatedData = LocalDateTime.now().toString().getBytes();
         // 加密
         try (WritableByteChannel encryptingChannel = streamingAead.newEncryptingChannel(
-            FileChannel.open(Paths.get("encrypted.blob"), StandardOpenOption.WRITE,
-                StandardOpenOption.CREATE), associatedData);
-            FileChannel inputChannel = FileChannel.open(Paths.get("mock.blob"),
-                StandardOpenOption.READ)
+                FileChannel.open(Paths.get("encrypted.blob"), StandardOpenOption.WRITE,
+                        StandardOpenOption.CREATE), associatedData);
+             FileChannel inputChannel = FileChannel.open(Paths.get("mock.blob"),
+                     StandardOpenOption.READ)
         ) {
             ByteBuffer byteBuffer = ByteBuffer.allocate(BLOCK_SIZE_IN_BYTES);
             while (true) {
@@ -68,10 +65,10 @@ public class UseStreamingAEAD {
         }
         // 解密
         try (ReadableByteChannel decryptingChannel = streamingAead.newDecryptingChannel(
-            FileChannel.open(Paths.get("encrypted.blob"), StandardOpenOption.READ), associatedData);
-            FileChannel outputChannel =
-                FileChannel.open(Paths.get("decrypted.blob"), StandardOpenOption.WRITE,
-                    StandardOpenOption.CREATE)
+                FileChannel.open(Paths.get("encrypted.blob"), StandardOpenOption.READ), associatedData);
+             FileChannel outputChannel =
+                     FileChannel.open(Paths.get("decrypted.blob"), StandardOpenOption.WRITE,
+                             StandardOpenOption.CREATE)
         ) {
             ByteBuffer byteBuffer = ByteBuffer.allocate(BLOCK_SIZE_IN_BYTES);
             while (true) {

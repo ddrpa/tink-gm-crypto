@@ -1,20 +1,11 @@
 package cc.ddrpa.interop;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import cc.ddrpa.crypto.tink.aead.Sm4GcmKeyManager;
 import cc.ddrpa.crypto.tink.hybrid.Sm2EncryptionKeyManager;
 import cc.ddrpa.crypto.tink.hybrid.Sm2HybridKeyManager;
 import cc.ddrpa.crypto.tink.signature.Sm2SignKeyManager;
 import cc.ddrpa.crypto.tink.streamingaead.Sm4GcmHkdfStreamingKeyManager;
-import cc.ddrpa.interop.bc.HexUtil;
-import cc.ddrpa.interop.bc.Sm2KemSm4GcmHybrid;
-import cc.ddrpa.interop.bc.Sm2Signature;
-import cc.ddrpa.interop.bc.Sm2StandardEncryption;
-import cc.ddrpa.interop.bc.Sm4GcmAead;
-import cc.ddrpa.interop.bc.Sm4GcmHkdfStreamingAead;
+import cc.ddrpa.interop.bc.*;
 import cc.ddrpa.interop.testing.InteropFixtures;
 import cc.ddrpa.interop.testing.InteropTink;
 import com.google.crypto.tink.Aead;
@@ -28,6 +19,8 @@ import com.google.crypto.tink.signature.SignatureConfig;
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * 历史向量回归：用<strong>对方角色（纯 BouncyCastle，不依赖 Tink）</strong>独立解密/验签
@@ -61,13 +54,13 @@ class HistoricalVectorsTest {
         byte[] ciphertext = HexUtil.decode(InteropFixtures.SM4_GCM_VECTOR_CIPHERTEXT_HEX);
         assertEquals(12 + InteropFixtures.SAMPLE_PLAINTEXT.length + 16, ciphertext.length);
         assertArrayEquals(
-            InteropFixtures.SAMPLE_PLAINTEXT,
-            Sm4GcmAead.decrypt(KEY, ciphertext, InteropFixtures.SAMPLE_AAD));
+                InteropFixtures.SAMPLE_PLAINTEXT,
+                Sm4GcmAead.decrypt(KEY, ciphertext, InteropFixtures.SAMPLE_AAD));
         // Tink 侧重解（回归）。
         Aead tink = InteropTink.newRawSm4GcmAead();
         assertArrayEquals(
-            InteropFixtures.SAMPLE_PLAINTEXT,
-            tink.decrypt(ciphertext, InteropFixtures.SAMPLE_AAD));
+                InteropFixtures.SAMPLE_PLAINTEXT,
+                tink.decrypt(ciphertext, InteropFixtures.SAMPLE_AAD));
     }
 
     @Test
@@ -83,11 +76,11 @@ class HistoricalVectorsTest {
     @Test
     void sm2StandardEncryptionHistoricalCiphertextDecryptsWithBcOnly() throws Exception {
         byte[] ciphertext = HexUtil.decode(
-            InteropFixtures.SM2_STANDARD_ENCRYPTION_VECTOR_CIPHERTEXT_HEX);
+                InteropFixtures.SM2_STANDARD_ENCRYPTION_VECTOR_CIPHERTEXT_HEX);
         assertEquals(65 + 32 + InteropFixtures.SAMPLE_PLAINTEXT.length, ciphertext.length);
         assertArrayEquals(
-            InteropFixtures.SAMPLE_PLAINTEXT,
-            Sm2StandardEncryption.decrypt(D, ciphertext));
+                InteropFixtures.SAMPLE_PLAINTEXT,
+                Sm2StandardEncryption.decrypt(D, ciphertext));
         // Tink 侧重解（回归）。
         HybridDecrypt tink = InteropTink.newRawSm2StandardDecryptor();
         assertArrayEquals(InteropFixtures.SAMPLE_PLAINTEXT, tink.decrypt(ciphertext, null));
@@ -98,31 +91,31 @@ class HistoricalVectorsTest {
         byte[] ciphertext = HexUtil.decode(InteropFixtures.SM2_HYBRID_VECTOR_CIPHERTEXT_HEX);
         assertEquals(65 + 12 + InteropFixtures.SAMPLE_PLAINTEXT.length + 16, ciphertext.length);
         assertArrayEquals(
-            InteropFixtures.SAMPLE_PLAINTEXT,
-            Sm2KemSm4GcmHybrid.decrypt(D, ciphertext, InteropFixtures.SAMPLE_CONTEXT_INFO));
+                InteropFixtures.SAMPLE_PLAINTEXT,
+                Sm2KemSm4GcmHybrid.decrypt(D, ciphertext, InteropFixtures.SAMPLE_CONTEXT_INFO));
         // Tink 侧重解（回归）。
         HybridDecrypt tink = InteropTink.newRawSm2HybridDecryptor();
         assertArrayEquals(
-            InteropFixtures.SAMPLE_PLAINTEXT,
-            tink.decrypt(ciphertext, InteropFixtures.SAMPLE_CONTEXT_INFO));
+                InteropFixtures.SAMPLE_PLAINTEXT,
+                tink.decrypt(ciphertext, InteropFixtures.SAMPLE_CONTEXT_INFO));
     }
 
     @Test
     void sm4GcmHkdfStreamingHistoricalCiphertextDecryptsWithBcOnly() throws Exception {
         byte[] ciphertext = HexUtil.decode(
-            InteropFixtures.SM4_GCM_HKDF_STREAMING_VECTOR_CIPHERTEXT_HEX);
+                InteropFixtures.SM4_GCM_HKDF_STREAMING_VECTOR_CIPHERTEXT_HEX);
         byte[] plaintext = HexUtil.decode(
-            InteropFixtures.SM4_GCM_HKDF_STREAMING_VECTOR_PLAINTEXT_HEX);
+                InteropFixtures.SM4_GCM_HKDF_STREAMING_VECTOR_PLAINTEXT_HEX);
         assertEquals(140, ciphertext.length);
         assertArrayEquals(
-            plaintext,
-            Sm4GcmHkdfStreamingAead.decryptBytes(
-                KEY, 4096, InteropFixtures.SAMPLE_AAD, ciphertext));
+                plaintext,
+                Sm4GcmHkdfStreamingAead.decryptBytes(
+                        KEY, 4096, InteropFixtures.SAMPLE_AAD, ciphertext));
         // Tink 侧重解（回归）。
         StreamingAead tink = InteropTink.newSm4GcmHkdfStreamingAead(4096);
         assertArrayEquals(
-            plaintext,
-            Sm4GcmHkdfStreamingInteropTest.tinkDecrypt(tink, ciphertext,
-                InteropFixtures.SAMPLE_AAD));
+                plaintext,
+                Sm4GcmHkdfStreamingInteropTest.tinkDecrypt(tink, ciphertext,
+                        InteropFixtures.SAMPLE_AAD));
     }
 }

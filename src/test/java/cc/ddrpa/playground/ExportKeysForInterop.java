@@ -8,11 +8,8 @@ import cc.ddrpa.crypto.tink.hybrid.Sm2HybridPublicKey;
 import cc.ddrpa.crypto.tink.signature.Sm2SignaturePrivateKey;
 import cc.ddrpa.crypto.tink.signature.Sm2SignaturePublicKey;
 import cc.ddrpa.crypto.tink.streamingaead.Sm4GcmHkdfStreamingKey;
-import com.google.crypto.tink.CleartextKeysetHandle;
-import com.google.crypto.tink.InsecureSecretKeyAccess;
-import com.google.crypto.tink.JsonKeysetReader;
-import com.google.crypto.tink.Key;
-import com.google.crypto.tink.KeysetHandle;
+import com.google.crypto.tink.*;
+
 import java.io.FileInputStream;
 import java.io.InputStream;
 import java.security.GeneralSecurityException;
@@ -60,23 +57,23 @@ public class ExportKeysForInterop {
             System.out.println("   type=SM4-GCM-AEAD");
             System.out.println("   outputPrefix: " + hex(sm4.getOutputPrefix().toByteArray()));
             System.out.println("   sm4Key(16B): " + hex(
-                sm4.getKeyBytes().toByteArray(InsecureSecretKeyAccess.get())));
+                    sm4.getKeyBytes().toByteArray(InsecureSecretKeyAccess.get())));
         } else if (key instanceof Sm4GcmHkdfStreamingKey) {
             Sm4GcmHkdfStreamingKey stream = (Sm4GcmHkdfStreamingKey) key;
             System.out.println("   type=SM4-GCM-HKDF-STREAMING (无前缀)");
             System.out.println("   ikm: " + hex(
-                stream.getInitialKeyMaterial().toByteArray(InsecureSecretKeyAccess.get())));
+                    stream.getInitialKeyMaterial().toByteArray(InsecureSecretKeyAccess.get())));
             System.out.println("   ciphertextSegmentSize: "
-                + stream.getParameters().getCiphertextSegmentSizeBytes());
+                    + stream.getParameters().getCiphertextSegmentSizeBytes());
         } else if (key instanceof Sm2SignaturePrivateKey) {
             Sm2SignaturePrivateKey priv = (Sm2SignaturePrivateKey) key;
             System.out.println("   type=SM2-SIGNATURE (private keyset)");
             System.out.println("   outputPrefix: " + hex(
-                priv.getPublicKey().getOutputPrefix().toByteArray()));
+                    priv.getPublicKey().getOutputPrefix().toByteArray()));
             System.out.println("   d(32B): " + hex(
-                priv.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get())));
+                    priv.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get())));
             System.out.println("   Q(64B): " + hex(
-                priv.getPublicKey().getPublicKey().toByteArray()));
+                    priv.getPublicKey().getPublicKey().toByteArray()));
         } else if (key instanceof Sm2SignaturePublicKey) {
             Sm2SignaturePublicKey pub = (Sm2SignaturePublicKey) key;
             System.out.println("   type=SM2-SIGNATURE (public keyset)");
@@ -86,11 +83,11 @@ public class ExportKeysForInterop {
             Sm2EncryptionPrivateKey priv = (Sm2EncryptionPrivateKey) key;
             System.out.println("   type=SM2-STANDARD-ENCRYPTION (private keyset)");
             System.out.println("   outputPrefix: " + hex(
-                priv.getPublicKey().getOutputPrefix().toByteArray()));
+                    priv.getPublicKey().getOutputPrefix().toByteArray()));
             System.out.println("   d(32B): " + hex(
-                priv.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get())));
+                    priv.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get())));
             System.out.println("   Q(64B): " + hex(
-                priv.getPublicKey().getPublicKey().toByteArray()));
+                    priv.getPublicKey().getPublicKey().toByteArray()));
         } else if (key instanceof Sm2EncryptionPublicKey) {
             Sm2EncryptionPublicKey pub = (Sm2EncryptionPublicKey) key;
             System.out.println("   type=SM2-STANDARD-ENCRYPTION (public keyset)");
@@ -100,11 +97,11 @@ public class ExportKeysForInterop {
             Sm2HybridPrivateKey priv = (Sm2HybridPrivateKey) key;
             System.out.println("   type=SM2-KEM-SM4-GCM-HYBRID (private keyset)");
             System.out.println("   outputPrefix: " + hex(
-                priv.getPublicKey().getOutputPrefix().toByteArray()));
+                    priv.getPublicKey().getOutputPrefix().toByteArray()));
             System.out.println("   d(32B): " + hex(
-                priv.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get())));
+                    priv.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get())));
             System.out.println("   Q(64B): " + hex(
-                priv.getPublicKey().getPublicKey().toByteArray()));
+                    priv.getPublicKey().getPublicKey().toByteArray()));
         } else if (key instanceof Sm2HybridPublicKey) {
             Sm2HybridPublicKey pub = (Sm2HybridPublicKey) key;
             System.out.println("   type=SM2-KEM-SM4-GCM-HYBRID (public keyset)");

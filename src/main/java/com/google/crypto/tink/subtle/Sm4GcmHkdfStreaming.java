@@ -5,16 +5,17 @@ import cc.ddrpa.crypto.tink.streamingaead.Sm4GcmHkdfStreamingParameters.HashType
 import com.google.crypto.tink.AccessesPartialKey;
 import com.google.crypto.tink.InsecureSecretKeyAccess;
 import com.google.crypto.tink.StreamingAead;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.security.GeneralSecurityException;
 import java.security.InvalidAlgorithmParameterException;
 import java.security.Security;
 import java.util.Arrays;
-import javax.crypto.Cipher;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 /**
  * Streaming encryption using {@code SM4-GCM} with {@code HKDF} as key derivation function.
@@ -93,11 +94,11 @@ public final class Sm4GcmHkdfStreaming extends NonceBasedStreamingAead {
      *                                            ciphertextSegmentSize is to short.
      */
     public Sm4GcmHkdfStreaming(byte[] ikm, String hkdfAlg, int keySizeInBytes,
-        int ciphertextSegmentSize, int firstSegmentOffset)
-        throws InvalidAlgorithmParameterException {
+                               int ciphertextSegmentSize, int firstSegmentOffset)
+            throws InvalidAlgorithmParameterException {
         if (ikm.length < 16 || ikm.length < keySizeInBytes) {
             throw new InvalidAlgorithmParameterException(
-                "ikm too short, must be >= " + Math.max(16, keySizeInBytes));
+                    "ikm too short, must be >= " + Math.max(16, keySizeInBytes));
         }
 //    Validators.validateSm4KeySize(keySizeInBytes);
         if (ciphertextSegmentSize <= firstSegmentOffset + getHeaderLength() + TAG_SIZE_IN_BYTES) {
@@ -112,7 +113,7 @@ public final class Sm4GcmHkdfStreaming extends NonceBasedStreamingAead {
     }
 
     private Sm4GcmHkdfStreaming(Sm4GcmHkdfStreamingKey key)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         this.ikm = key.getInitialKeyMaterial().toByteArray(InsecureSecretKeyAccess.get());
         String hkdfAlgString = "";
         if (key.getParameters().getHkdfHashType().equals(HashType.SHA1)) {
@@ -123,7 +124,7 @@ public final class Sm4GcmHkdfStreaming extends NonceBasedStreamingAead {
             hkdfAlgString = "HmacSha512";
         } else {
             throw new GeneralSecurityException(
-                "Unknown HKDF algorithm " + key.getParameters().getHkdfHashType());
+                    "Unknown HKDF algorithm " + key.getParameters().getHkdfHashType());
         }
         this.hkdfAlg = hkdfAlgString;
         this.keySizeInBytes = key.getParameters().getDerivedSm4GcmKeySizeBytes();
@@ -134,7 +135,7 @@ public final class Sm4GcmHkdfStreaming extends NonceBasedStreamingAead {
     }
 
     public static StreamingAead create(Sm4GcmHkdfStreamingKey key)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         return new Sm4GcmHkdfStreaming(key);
     }
 
@@ -143,7 +144,7 @@ public final class Sm4GcmHkdfStreaming extends NonceBasedStreamingAead {
     }
 
     private static GCMParameterSpec paramsForSegment(byte[] prefix, long segmentNr, boolean last)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         ByteBuffer nonce = ByteBuffer.allocate(NONCE_SIZE_IN_BYTES);
         nonce.order(ByteOrder.BIG_ENDIAN);
         nonce.put(prefix);
@@ -158,7 +159,7 @@ public final class Sm4GcmHkdfStreaming extends NonceBasedStreamingAead {
 
     @Override
     public Sm4GcmHkdfStreamEncrypter newStreamSegmentEncrypter(byte[] aad)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         return new Sm4GcmHkdfStreamEncrypter(aad);
     }
 
@@ -258,12 +259,12 @@ public final class Sm4GcmHkdfStreaming extends NonceBasedStreamingAead {
          */
         @Override
         public synchronized void encryptSegment(
-            ByteBuffer plaintext, boolean isLastSegment, ByteBuffer ciphertext)
-            throws GeneralSecurityException {
+                ByteBuffer plaintext, boolean isLastSegment, ByteBuffer ciphertext)
+                throws GeneralSecurityException {
             cipher.init(
-                Cipher.ENCRYPT_MODE,
-                keySpec,
-                paramsForSegment(noncePrefix, encryptedSegments, isLastSegment));
+                    Cipher.ENCRYPT_MODE,
+                    keySpec,
+                    paramsForSegment(noncePrefix, encryptedSegments, isLastSegment));
             encryptedSegments++;
             cipher.doFinal(plaintext, ciphertext);
         }
@@ -274,12 +275,12 @@ public final class Sm4GcmHkdfStreaming extends NonceBasedStreamingAead {
          */
         @Override
         public synchronized void encryptSegment(
-            ByteBuffer part1, ByteBuffer part2, boolean isLastSegment, ByteBuffer ciphertext)
-            throws GeneralSecurityException {
+                ByteBuffer part1, ByteBuffer part2, boolean isLastSegment, ByteBuffer ciphertext)
+                throws GeneralSecurityException {
             cipher.init(
-                Cipher.ENCRYPT_MODE,
-                keySpec,
-                paramsForSegment(noncePrefix, encryptedSegments, isLastSegment));
+                    Cipher.ENCRYPT_MODE,
+                    keySpec,
+                    paramsForSegment(noncePrefix, encryptedSegments, isLastSegment));
             encryptedSegments++;
             // `update(nonEmpty)`, `doFinal(empty)` is known to cause problems on Android 23.
             // See https://github.com/google/tink/issues/229
@@ -306,7 +307,7 @@ public final class Sm4GcmHkdfStreaming extends NonceBasedStreamingAead {
 
         @Override
         public synchronized void init(ByteBuffer header, byte[] aad)
-            throws GeneralSecurityException {
+                throws GeneralSecurityException {
             if (header.remaining() != getHeaderLength()) {
                 throw new InvalidAlgorithmParameterException("Invalid header length");
             }
@@ -327,8 +328,8 @@ public final class Sm4GcmHkdfStreaming extends NonceBasedStreamingAead {
 
         @Override
         public synchronized void decryptSegment(
-            ByteBuffer ciphertext, int segmentNr, boolean isLastSegment, ByteBuffer plaintext)
-            throws GeneralSecurityException {
+                ByteBuffer ciphertext, int segmentNr, boolean isLastSegment, ByteBuffer plaintext)
+                throws GeneralSecurityException {
             GCMParameterSpec params = paramsForSegment(noncePrefix, segmentNr, isLastSegment);
             cipher.init(Cipher.DECRYPT_MODE, keySpec, params);
             cipher.doFinal(ciphertext, plaintext);

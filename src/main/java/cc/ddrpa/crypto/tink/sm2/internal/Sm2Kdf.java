@@ -1,8 +1,9 @@
 package cc.ddrpa.crypto.tink.sm2.internal;
 
+import org.bouncycastle.crypto.digests.SM3Digest;
+
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
-import org.bouncycastle.crypto.digests.SM3Digest;
 
 /**
  * SM2 密钥派生函数（KDF），见 GB/T 32918.4-2016 第 5.4.3 节。
@@ -12,7 +13,9 @@ import org.bouncycastle.crypto.digests.SM3Digest;
  */
 public final class Sm2Kdf {
 
-    /** SM3 摘要长度（字节）。 */
+    /**
+     * SM3 摘要长度（字节）。
+     */
     public static final int SM3_DIGEST_SIZE = 32;
 
     private Sm2Kdf() {
@@ -21,7 +24,7 @@ public final class Sm2Kdf {
     /**
      * 使用 SM2-KDF 派生密钥材料。
      *
-     * @param z 派生输入（通常为 64 字节的 x2 ‖ y2）
+     * @param z               派生输入（通常为 64 字节的 x2 ‖ y2）
      * @param outputSizeBytes 期望的输出长度（字节），可为 0
      * @throws GeneralSecurityException 参数非法时抛出
      */
@@ -31,7 +34,7 @@ public final class Sm2Kdf {
         }
         if (outputSizeBytes < 0) {
             throw new GeneralSecurityException(
-                "KDF output size must be non-negative, got " + outputSizeBytes);
+                    "KDF output size must be non-negative, got " + outputSizeBytes);
         }
         if (outputSizeBytes == 0) {
             return new byte[0];

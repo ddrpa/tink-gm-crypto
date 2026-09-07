@@ -16,7 +16,7 @@ public final class StreamingAeadTestVector {
     private final Bytes ciphertext;
 
     public StreamingAeadTestVector(
-        StreamingAeadKey key, byte[] plaintext, byte[] associatedData, byte[] ciphertext) {
+            StreamingAeadKey key, byte[] plaintext, byte[] associatedData, byte[] ciphertext) {
         this.key = key;
         this.plaintext = Bytes.copyFrom(plaintext);
         this.associatedData = Bytes.copyFrom(associatedData);

@@ -1,21 +1,19 @@
 package cc.ddrpa.interop;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
+import cc.ddrpa.crypto.tink.aead.Sm4GcmKeyManager;
 import cc.ddrpa.interop.bc.HexUtil;
 import cc.ddrpa.interop.bc.Sm4GcmAead;
 import cc.ddrpa.interop.testing.InteropFixtures;
 import cc.ddrpa.interop.testing.InteropTink;
 import com.google.crypto.tink.Aead;
 import com.google.crypto.tink.aead.AeadConfig;
-import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import cc.ddrpa.crypto.tink.aead.Sm4GcmKeyManager;
+
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * SM4-GCM AEAD 的跨系统互操作自检：Tink 侧（本库）⇄ 对方侧（纯 BouncyCastle，见
@@ -35,6 +33,26 @@ class Sm4GcmInteropTest {
         Sm4GcmKeyManager.register(true);
     }
 
+    /**
+     * 读取 TINK 前缀中的 keyId（4 字节大端）。
+     */
+    static int readTinkPrefixKeyId(byte[] prefixed) {
+        assertTrue(prefixed.length > 5, "ciphertext too short for TINK prefix");
+        assertEquals(0x01, prefixed[0] & 0xff);
+        return ((prefixed[1] & 0xff) << 24)
+                | ((prefixed[2] & 0xff) << 16)
+                | ((prefixed[3] & 0xff) << 8)
+                | (prefixed[4] & 0xff);
+    }
+
+    /**
+     * 剥离 5 字节 TINK 前缀，返回后续密文体。
+     */
+    static byte[] stripTinkPrefix(byte[] prefixed) {
+        readTinkPrefixKeyId(prefixed);
+        return Arrays.copyOfRange(prefixed, 5, prefixed.length);
+    }
+
     // 方向一：Tink 加密 → 对方 BC 解密。
     @Test
     void tinkEncryptsBcDecrypts() throws Exception {
@@ -45,7 +63,7 @@ class Sm4GcmInteropTest {
             assertEquals(12 + PLAINTEXT.length + 16, ciphertext.length);
             byte[] aadForBc = aad == null ? new byte[0] : aad;
             assertArrayEquals(
-                PLAINTEXT, Sm4GcmAead.decrypt(KEY, ciphertext, aadForBc));
+                    PLAINTEXT, Sm4GcmAead.decrypt(KEY, ciphertext, aadForBc));
         }
     }
 
@@ -81,8 +99,8 @@ class Sm4GcmInteropTest {
         byte[] wrongAad = "someone-else".getBytes();
         byte[] tinkCiphertext = tink.encrypt(PLAINTEXT, InteropFixtures.SAMPLE_AAD);
         assertThrows(
-            GeneralSecurityException.class,
-            () -> Sm4GcmAead.decrypt(KEY, tinkCiphertext, wrongAad));
+                GeneralSecurityException.class,
+                () -> Sm4GcmAead.decrypt(KEY, tinkCiphertext, wrongAad));
 
         byte[] bcCiphertext = Sm4GcmAead.encrypt(KEY, PLAINTEXT, InteropFixtures.SAMPLE_AAD);
         assertThrows(GeneralSecurityException.class, () -> tink.decrypt(bcCiphertext, wrongAad));
@@ -101,21 +119,5 @@ class Sm4GcmInteropTest {
         assertEquals(FIXED_KEY_ID, readTinkPrefixKeyId(ciphertext));
         byte[] body = stripTinkPrefix(ciphertext);
         assertArrayEquals(PLAINTEXT, Sm4GcmAead.decrypt(KEY, body, InteropFixtures.SAMPLE_AAD));
-    }
-
-    /** 读取 TINK 前缀中的 keyId（4 字节大端）。 */
-    static int readTinkPrefixKeyId(byte[] prefixed) {
-        assertTrue(prefixed.length > 5, "ciphertext too short for TINK prefix");
-        assertEquals(0x01, prefixed[0] & 0xff);
-        return ((prefixed[1] & 0xff) << 24)
-            | ((prefixed[2] & 0xff) << 16)
-            | ((prefixed[3] & 0xff) << 8)
-            | (prefixed[4] & 0xff);
-    }
-
-    /** 剥离 5 字节 TINK 前缀，返回后续密文体。 */
-    static byte[] stripTinkPrefix(byte[] prefixed) {
-        readTinkPrefixKeyId(prefixed);
-        return Arrays.copyOfRange(prefixed, 5, prefixed.length);
     }
 }

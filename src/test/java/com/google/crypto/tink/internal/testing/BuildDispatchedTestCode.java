@@ -12,7 +12,7 @@
 // See the License for the specified language governing permissions and
 // limitations under the License.
 //
-////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
 
 package com.google.crypto.tink.internal.testing;
 
@@ -30,19 +30,20 @@ import java.io.InputStream;
  */
 public final class BuildDispatchedTestCode {
 
-  private BuildDispatchedTestCode() {}
+    private BuildDispatchedTestCode() {
+    }
 
-  public static InputStream openInputFile(String pathname) throws FileNotFoundException {
-    return new FileInputStream(new File(pathname));
-  }
+    public static InputStream openInputFile(String pathname) throws FileNotFoundException {
+        return new FileInputStream(new File(pathname));
+    }
 
-  /**
-   * Within Google, Tink uses the Guava flags library. To modify such flags in tests, this method
-   * has to be called first.
-   */
-  // UnnecessarilyFullyQualified makes it easier to comment out the the line below for OSS
-  @SuppressWarnings("UnnecessarilyFullyQualified")
-  public static void disableFlagsStateCheckingForTests() {
-    /* com.google.common.flags.Flags.disableStateCheckingForTest(); */
-  }
+    /**
+     * Within Google, Tink uses the Guava flags library. To modify such flags in tests, this method
+     * has to be called first.
+     */
+    // UnnecessarilyFullyQualified makes it easier to comment out the the line below for OSS
+    @SuppressWarnings("UnnecessarilyFullyQualified")
+    public static void disableFlagsStateCheckingForTests() {
+        /* com.google.common.flags.Flags.disableStateCheckingForTest(); */
+    }
 }

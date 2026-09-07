@@ -1,12 +1,5 @@
 package cc.ddrpa.interop.bc;
 
-import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
-import java.util.Arrays;
-import javax.crypto.Cipher;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
@@ -15,6 +8,14 @@ import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.math.ec.ECPoint;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
+import java.util.Arrays;
 
 /**
  * 对方侧（不使用 Google Tink）的 SM2-KEM + SM4-GCM 混合加密参考实现（仅 BouncyCastle + JDK）。
@@ -39,31 +40,37 @@ import org.bouncycastle.math.ec.ECPoint;
  */
 public final class Sm2KemSm4GcmHybrid {
 
-    private Sm2KemSm4GcmHybrid() {
-    }
-
-    /** C1 长度：65 字节非压缩点。 */
+    /**
+     * C1 长度：65 字节非压缩点。
+     */
     public static final int C1_SIZE = Sm2BcUtil.UNCOMPRESSED_POINT_SIZE;
-    /** SM4-GCM nonce 长度。 */
+    /**
+     * SM4-GCM nonce 长度。
+     */
     public static final int NONCE_SIZE = 12;
-    /** 派生数据密钥长度：16 字节。 */
+    /**
+     * 派生数据密钥长度：16 字节。
+     */
     public static final int KEY_SIZE_BYTES = 16;
-    /** 密文体最小长度：C1 + nonce + tag。 */
+    /**
+     * 密文体最小长度：C1 + nonce + tag。
+     */
     public static final int MIN_CIPHERTEXT_SIZE = C1_SIZE + NONCE_SIZE + 16;
-
     private static final SecureRandom RANDOM = new SecureRandom();
     private static final BouncyCastleProvider BC_PROVIDER = new BouncyCastleProvider();
+    private Sm2KemSm4GcmHybrid() {
+    }
 
     /**
      * 加密。
      *
-     * @param q 64 字节接收方公钥（X ‖ Y）
-     * @param plaintext 明文（可为空数组）
+     * @param q           64 字节接收方公钥（X ‖ Y）
+     * @param plaintext   明文（可为空数组）
      * @param contextInfo 关联数据（可为 null/空，作为 SM4-GCM AAD 认证）
      * @return 本库混合密文 {@code C1 ‖ nonce ‖ SM4-GCM 密文}
      */
     public static byte[] encrypt(byte[] q, byte[] plaintext, byte[] contextInfo)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         if (plaintext == null) {
             throw new NullPointerException("plaintext is null");
         }
@@ -85,9 +92,9 @@ public final class Sm2KemSm4GcmHybrid {
         RANDOM.nextBytes(nonce);
         Cipher cipher = Cipher.getInstance("SM4/GCM/NoPadding", BC_PROVIDER);
         cipher.init(
-            Cipher.ENCRYPT_MODE,
-            new SecretKeySpec(demKey, "SM4"),
-            new GCMParameterSpec(8 * 16, nonce));
+                Cipher.ENCRYPT_MODE,
+                new SecretKeySpec(demKey, "SM4"),
+                new GCMParameterSpec(8 * 16, nonce));
         if (contextInfo != null && contextInfo.length != 0) {
             cipher.updateAAD(contextInfo);
         }
@@ -103,14 +110,14 @@ public final class Sm2KemSm4GcmHybrid {
     /**
      * 解密本库混合密文。
      *
-     * @param d 32 字节私钥标量
-     * @param ciphertext {@code C1 ‖ nonce ‖ SM4-GCM 密文}（无前缀）
+     * @param d           32 字节私钥标量
+     * @param ciphertext  {@code C1 ‖ nonce ‖ SM4-GCM 密文}（无前缀）
      * @param contextInfo 加密时使用的同一关联数据
      * @return 明文
      * @throws GeneralSecurityException 长度非法、C1 无效、AAD/tag 校验失败等统一抛此异常
      */
     public static byte[] decrypt(byte[] d, byte[] ciphertext, byte[] contextInfo)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         if (ciphertext == null) {
             throw new NullPointerException("ciphertext is null");
         }
@@ -121,7 +128,7 @@ public final class Sm2KemSm4GcmHybrid {
         try {
             // 1. C1 点解码并计算共享点 S = d * C1。
             ECPoint c1Point =
-                Sm2BcUtil.decodePoint(Arrays.copyOfRange(ciphertext, 0, C1_SIZE));
+                    Sm2BcUtil.decodePoint(Arrays.copyOfRange(ciphertext, 0, C1_SIZE));
             ECPoint shared = Sm2BcUtil.validatePoint(c1Point.multiply(privateKey.getD()));
 
             // 2. 重派生数据密钥。
@@ -131,15 +138,15 @@ public final class Sm2KemSm4GcmHybrid {
             int nonceOffset = C1_SIZE;
             Cipher cipher = Cipher.getInstance("SM4/GCM/NoPadding", BC_PROVIDER);
             cipher.init(
-                Cipher.DECRYPT_MODE,
-                new SecretKeySpec(demKey, "SM4"),
-                new GCMParameterSpec(8 * 16, ciphertext, nonceOffset, NONCE_SIZE));
+                    Cipher.DECRYPT_MODE,
+                    new SecretKeySpec(demKey, "SM4"),
+                    new GCMParameterSpec(8 * 16, ciphertext, nonceOffset, NONCE_SIZE));
             if (contextInfo != null && contextInfo.length != 0) {
                 cipher.updateAAD(contextInfo);
             }
             byte[] plaintext = cipher.doFinal(
-                ciphertext, nonceOffset + NONCE_SIZE,
-                ciphertext.length - nonceOffset - NONCE_SIZE);
+                    ciphertext, nonceOffset + NONCE_SIZE,
+                    ciphertext.length - nonceOffset - NONCE_SIZE);
             return Arrays.copyOf(plaintext, plaintext.length);
         } catch (GeneralSecurityException e) {
             throw new GeneralSecurityException("Decryption failed", e);
@@ -152,7 +159,7 @@ public final class Sm2KemSm4GcmHybrid {
     /**
      * SM2-KDF（GB/T 32918.4-2016 第 5.4.3 节）：以 SM3 为哈希、4 字节大端计数器循环生成足够比特流后截断。
      *
-     * @param z KDF 输入（本方案中为 64 字节 x2 ‖ y2）
+     * @param z               KDF 输入（本方案中为 64 字节 x2 ‖ y2）
      * @param outputSizeBytes 期望输出长度（字节）
      */
     private static byte[] sm2Kdf(byte[] z, int outputSizeBytes) {
@@ -175,7 +182,7 @@ public final class Sm2KemSm4GcmHybrid {
         }
         Arrays.fill(block, (byte) 0);
         return outputSizeBytes == output.length
-            ? output
-            : Arrays.copyOf(output, outputSizeBytes);
+                ? output
+                : Arrays.copyOf(output, outputSizeBytes);
     }
 }

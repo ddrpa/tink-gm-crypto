@@ -1,19 +1,20 @@
 package cc.ddrpa.crypto.tink.streamingaead.internal.testing;
 
 import com.google.crypto.tink.subtle.Hex;
+import org.bouncycastle.crypto.digests.SHA1Digest;
+import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
+import org.bouncycastle.crypto.params.HKDFParameters;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+
+import javax.crypto.Cipher;
+import javax.crypto.spec.GCMParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.nio.charset.StandardCharsets;
 import java.security.Security;
 import java.util.ArrayList;
 import java.util.List;
-import javax.crypto.Cipher;
-import javax.crypto.spec.GCMParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
-import org.bouncycastle.crypto.digests.SHA1Digest;
-import org.bouncycastle.crypto.generators.HKDFBytesGenerator;
-import org.bouncycastle.crypto.params.HKDFParameters;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 public class SM4GCMTestVectorGenerator {
 
@@ -29,7 +30,7 @@ public class SM4GCMTestVectorGenerator {
         byte[] noncePrefix = Hex.decode("2c0862877baea8");
         // 明文
         byte[] plaintext = "This is a fairly long plaintext. It is of the exact length to create three output blocks. ".getBytes(
-            StandardCharsets.UTF_8);
+                StandardCharsets.UTF_8);
         // 关联数据
         byte[] aad = "aad".getBytes(StandardCharsets.UTF_8);
 
@@ -53,7 +54,7 @@ public class SM4GCMTestVectorGenerator {
         if (plaintext.length == 0) {
             // 如果明文为空，添加一个空的段
             byte[] emptySegment = encryptSegment(derivedKey, noncePrefix, aad, plaintext, 0, 0, 0,
-                true);
+                    true);
             System.out.println(Hex.encode(emptySegment));
         } else {
             int segmentNr = 0;
@@ -72,8 +73,8 @@ public class SM4GCMTestVectorGenerator {
                 int len = Math.min(plaintextSegmentSize, plaintext.length - offset);
                 boolean isLast = (offset + len == plaintext.length);
                 byte[] segment = encryptSegment(derivedKey, noncePrefix, aad, plaintext, offset,
-                    len,
-                    segmentNr, isLast);
+                        len,
+                        segmentNr, isLast);
                 segments.add(segment);
                 offset += len;
                 segmentNr++;
@@ -83,8 +84,8 @@ public class SM4GCMTestVectorGenerator {
     }
 
     private static byte[] encryptSegment(byte[] key, byte[] noncePrefix, byte[] aad,
-        byte[] plaintext, int offset, int length, int segmentNr, boolean isLastSegment)
-        throws Exception {
+                                         byte[] plaintext, int offset, int length, int segmentNr, boolean isLastSegment)
+            throws Exception {
         // 创建段特定的 nonce
         byte[] segmentNonce = new byte[12];  // 固定为12字节
         System.arraycopy(noncePrefix, 0, segmentNonce, 0, noncePrefix.length);  // 7字节

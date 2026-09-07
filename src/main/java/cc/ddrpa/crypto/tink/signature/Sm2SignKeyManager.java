@@ -1,37 +1,25 @@
 package cc.ddrpa.crypto.tink.signature;
 
-import static com.google.crypto.tink.internal.TinkBugException.exceptionIsBug;
-
 import cc.ddrpa.crypto.tink.signature.internal.Sm2PublicKeySign;
 import cc.ddrpa.crypto.tink.signature.internal.Sm2PublicKeyVerify;
 import cc.ddrpa.crypto.tink.signature.internal.Sm2SignatureProtoSerialization;
 import cc.ddrpa.crypto.tink.sm2.internal.Sm2Curve;
 import cc.ddrpa.crypto.tink.sm2.internal.Sm2KeyUtil;
-import com.google.crypto.tink.AccessesPartialKey;
-import com.google.crypto.tink.InsecureSecretKeyAccess;
-import com.google.crypto.tink.KeyManager;
-import com.google.crypto.tink.KeyTemplate;
-import com.google.crypto.tink.Parameters;
-import com.google.crypto.tink.PrivateKeyManager;
-import com.google.crypto.tink.PublicKeySign;
-import com.google.crypto.tink.PublicKeyVerify;
+import com.google.crypto.tink.*;
 import com.google.crypto.tink.config.internal.TinkFipsUtil;
-import com.google.crypto.tink.internal.KeyCreator;
-import com.google.crypto.tink.internal.KeyManagerRegistry;
-import com.google.crypto.tink.internal.LegacyKeyManagerImpl;
-import com.google.crypto.tink.internal.MutableKeyCreationRegistry;
-import com.google.crypto.tink.internal.MutableParametersRegistry;
-import com.google.crypto.tink.internal.MutablePrimitiveRegistry;
-import com.google.crypto.tink.internal.PrimitiveConstructor;
+import com.google.crypto.tink.internal.*;
 import com.google.crypto.tink.proto.KeyData.KeyMaterialType;
 import com.google.crypto.tink.util.Bytes;
 import com.google.crypto.tink.util.SecretBytes;
+import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+
+import javax.annotation.Nullable;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import javax.annotation.Nullable;
-import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
+
+import static com.google.crypto.tink.internal.TinkBugException.exceptionIsBug;
 
 /**
  * This key manager generates new {@code Sm2SignaturePrivateKey} keys and produces new instances of
@@ -40,31 +28,31 @@ import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 public final class Sm2SignKeyManager {
 
     private static final PrimitiveConstructor<Sm2SignaturePrivateKey, PublicKeySign>
-        PUBLIC_KEY_SIGN_PRIMITIVE_CONSTRUCTOR =
-        PrimitiveConstructor.create(
-            Sm2PublicKeySign::create, Sm2SignaturePrivateKey.class, PublicKeySign.class);
+            PUBLIC_KEY_SIGN_PRIMITIVE_CONSTRUCTOR =
+            PrimitiveConstructor.create(
+                    Sm2PublicKeySign::create, Sm2SignaturePrivateKey.class, PublicKeySign.class);
 
     private static final PrimitiveConstructor<Sm2SignaturePublicKey, PublicKeyVerify>
-        PUBLIC_KEY_VERIFY_PRIMITIVE_CONSTRUCTOR =
-        PrimitiveConstructor.create(
-            Sm2PublicKeyVerify::create, Sm2SignaturePublicKey.class, PublicKeyVerify.class);
+            PUBLIC_KEY_VERIFY_PRIMITIVE_CONSTRUCTOR =
+            PrimitiveConstructor.create(
+                    Sm2PublicKeyVerify::create, Sm2SignaturePublicKey.class, PublicKeyVerify.class);
 
     private static final PrivateKeyManager<PublicKeySign> legacyPrivateKeyManager =
-        LegacyKeyManagerImpl.createPrivateKeyManager(
-            getKeyType(),
-            PublicKeySign.class,
-            cc.ddrpa.crypto.tink.proto.Sm2SignaturePrivateKey.parser());
+            LegacyKeyManagerImpl.createPrivateKeyManager(
+                    getKeyType(),
+                    PublicKeySign.class,
+                    cc.ddrpa.crypto.tink.proto.Sm2SignaturePrivateKey.parser());
 
     private static final KeyManager<PublicKeyVerify> legacyPublicKeyManager =
-        LegacyKeyManagerImpl.create(
-            Sm2VerifyKeyManager.getKeyType(),
-            PublicKeyVerify.class,
-            KeyMaterialType.ASYMMETRIC_PUBLIC,
-            cc.ddrpa.crypto.tink.proto.Sm2SignaturePublicKey.parser());
+            LegacyKeyManagerImpl.create(
+                    Sm2VerifyKeyManager.getKeyType(),
+                    PublicKeyVerify.class,
+                    KeyMaterialType.ASYMMETRIC_PUBLIC,
+                    cc.ddrpa.crypto.tink.proto.Sm2SignaturePublicKey.parser());
 
     @SuppressWarnings("InlineLambdaConstant") // We need a correct Object#equals in registration.
     private static final KeyCreator<Sm2SignatureParameters> KEY_CREATOR =
-        Sm2SignKeyManager::createSm2SignatureKey;
+            Sm2SignKeyManager::createSm2SignatureKey;
 
     private Sm2SignKeyManager() {
     }
@@ -75,40 +63,40 @@ public final class Sm2SignKeyManager {
 
     @AccessesPartialKey
     private static Sm2SignaturePrivateKey createSm2SignatureKey(
-        Sm2SignatureParameters parameters, @Nullable Integer idRequirement)
-        throws GeneralSecurityException {
+            Sm2SignatureParameters parameters, @Nullable Integer idRequirement)
+            throws GeneralSecurityException {
         AsymmetricCipherKeyPair keyPair = Sm2KeyUtil.generateKeyPair();
         byte[] publicKeyBytes =
-            Sm2Curve.encodePointWithoutPrefix(Sm2KeyUtil.getPublicKey(keyPair).getQ());
+                Sm2Curve.encodePointWithoutPrefix(Sm2KeyUtil.getPublicKey(keyPair).getQ());
         byte[] privateKeyBytes =
-            Sm2KeyUtil.toFixedLengthBytes(
-                Sm2KeyUtil.getPrivateKey(keyPair).getD(), Sm2Curve.COORDINATE_SIZE_BYTES);
+                Sm2KeyUtil.toFixedLengthBytes(
+                        Sm2KeyUtil.getPrivateKey(keyPair).getD(), Sm2Curve.COORDINATE_SIZE_BYTES);
 
         Sm2SignaturePublicKey publicKey =
-            Sm2SignaturePublicKey.builder()
-                .setParameters(parameters)
-                .setIdRequirement(idRequirement)
-                .setPublicKey(Bytes.copyFrom(publicKeyBytes))
-                .build();
+                Sm2SignaturePublicKey.builder()
+                        .setParameters(parameters)
+                        .setIdRequirement(idRequirement)
+                        .setPublicKey(Bytes.copyFrom(publicKeyBytes))
+                        .build();
         return Sm2SignaturePrivateKey.builder()
-            .setPublicKey(publicKey)
-            .setPrivateValue(
-                SecretBytes.copyFrom(privateKeyBytes, InsecureSecretKeyAccess.get()))
-            .build();
+                .setPublicKey(publicKey)
+                .setPrivateValue(
+                        SecretBytes.copyFrom(privateKeyBytes, InsecureSecretKeyAccess.get()))
+                .build();
     }
 
     private static Map<String, Parameters> namedParameters() throws GeneralSecurityException {
         Map<String, Parameters> result = new HashMap<>();
         result.put(
-            "SM2_SIGN",
-            Sm2SignatureParameters.builder()
-                .setVariant(Sm2SignatureParameters.Variant.TINK)
-                .build());
+                "SM2_SIGN",
+                Sm2SignatureParameters.builder()
+                        .setVariant(Sm2SignatureParameters.Variant.TINK)
+                        .build());
         result.put(
-            "SM2_SIGN_RAW",
-            Sm2SignatureParameters.builder()
-                .setVariant(Sm2SignatureParameters.Variant.NO_PREFIX)
-                .build());
+                "SM2_SIGN_RAW",
+                Sm2SignatureParameters.builder()
+                        .setVariant(Sm2SignatureParameters.Variant.NO_PREFIX)
+                        .build());
         return Collections.unmodifiableMap(result);
     }
 
@@ -119,17 +107,17 @@ public final class Sm2SignKeyManager {
     public static void registerPair(boolean newKeyAllowed) throws GeneralSecurityException {
         if (!TinkFipsUtil.AlgorithmFipsCompatibility.ALGORITHM_NOT_FIPS.isCompatible()) {
             throw new GeneralSecurityException(
-                "Registering SM2 Signature is not supported in FIPS mode");
+                    "Registering SM2 Signature is not supported in FIPS mode");
         }
         Sm2SignatureProtoSerialization.register();
         MutableParametersRegistry.globalInstance().putAll(namedParameters());
         MutablePrimitiveRegistry.globalInstance()
-            .registerPrimitiveConstructor(PUBLIC_KEY_SIGN_PRIMITIVE_CONSTRUCTOR);
+                .registerPrimitiveConstructor(PUBLIC_KEY_SIGN_PRIMITIVE_CONSTRUCTOR);
         MutablePrimitiveRegistry.globalInstance()
-            .registerPrimitiveConstructor(PUBLIC_KEY_VERIFY_PRIMITIVE_CONSTRUCTOR);
+                .registerPrimitiveConstructor(PUBLIC_KEY_VERIFY_PRIMITIVE_CONSTRUCTOR);
         MutableKeyCreationRegistry.globalInstance().add(KEY_CREATOR, Sm2SignatureParameters.class);
         KeyManagerRegistry.globalInstance()
-            .registerKeyManager(legacyPrivateKeyManager, newKeyAllowed);
+                .registerKeyManager(legacyPrivateKeyManager, newKeyAllowed);
         KeyManagerRegistry.globalInstance().registerKeyManager(legacyPublicKeyManager, false);
     }
 
@@ -145,11 +133,11 @@ public final class Sm2SignKeyManager {
      */
     public static KeyTemplate sm2SignTemplate() {
         return exceptionIsBug(
-            () ->
-                KeyTemplate.createFrom(
-                    Sm2SignatureParameters.builder()
-                        .setVariant(Sm2SignatureParameters.Variant.TINK)
-                        .build()));
+                () ->
+                        KeyTemplate.createFrom(
+                                Sm2SignatureParameters.builder()
+                                        .setVariant(Sm2SignatureParameters.Variant.TINK)
+                                        .build()));
     }
 
     /**
@@ -166,10 +154,10 @@ public final class Sm2SignKeyManager {
      */
     public static KeyTemplate rawSm2SignTemplate() {
         return exceptionIsBug(
-            () ->
-                KeyTemplate.createFrom(
-                    Sm2SignatureParameters.builder()
-                        .setVariant(Sm2SignatureParameters.Variant.NO_PREFIX)
-                        .build()));
+                () ->
+                        KeyTemplate.createFrom(
+                                Sm2SignatureParameters.builder()
+                                        .setVariant(Sm2SignatureParameters.Variant.NO_PREFIX)
+                                        .build()));
     }
 }

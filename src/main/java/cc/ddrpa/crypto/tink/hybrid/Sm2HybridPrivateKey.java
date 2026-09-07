@@ -9,8 +9,9 @@ import com.google.crypto.tink.util.SecretBytes;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.Immutable;
 import com.google.errorprone.annotations.RestrictedApi;
-import java.security.GeneralSecurityException;
+
 import javax.annotation.Nullable;
+import java.security.GeneralSecurityException;
 
 /**
  * Represents a key for performing SM2 hybrid (F2) decryption.
@@ -31,10 +32,10 @@ public final class Sm2HybridPrivateKey extends HybridPrivateKey {
     }
 
     @RestrictedApi(
-        explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
-        link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
-        allowedOnPath = ".*Test\\.java",
-        allowlistAnnotations = {AccessesPartialKey.class})
+            explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
+            link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
+            allowedOnPath = ".*Test\\.java",
+            allowlistAnnotations = {AccessesPartialKey.class})
     public static Sm2HybridPrivateKey.Builder builder() {
         return new Sm2HybridPrivateKey.Builder();
     }
@@ -48,10 +49,10 @@ public final class Sm2HybridPrivateKey extends HybridPrivateKey {
      * Returns the underlying private key material: the 32-byte big-endian scalar {@code d}.
      */
     @RestrictedApi(
-        explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
-        link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
-        allowedOnPath = ".*Test\\.java",
-        allowlistAnnotations = {AccessesPartialKey.class})
+            explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
+            link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
+            allowedOnPath = ".*Test\\.java",
+            allowlistAnnotations = {AccessesPartialKey.class})
     public SecretBytes getPrivateValue() {
         return privateValue;
     }
@@ -63,7 +64,7 @@ public final class Sm2HybridPrivateKey extends HybridPrivateKey {
         }
         Sm2HybridPrivateKey that = (Sm2HybridPrivateKey) o;
         return that.publicKey.equalsKey(publicKey)
-            && privateValue.equalsSecretBytes(that.privateValue);
+                && privateValue.equalsSecretBytes(that.privateValue);
     }
 
     /**
@@ -99,7 +100,7 @@ public final class Sm2HybridPrivateKey extends HybridPrivateKey {
         public Sm2HybridPrivateKey build() throws GeneralSecurityException {
             if (publicKey == null) {
                 throw new GeneralSecurityException(
-                    "Cannot build without an SM2 hybrid public key");
+                        "Cannot build without an SM2 hybrid public key");
             }
             if (privateValue == null) {
                 throw new GeneralSecurityException("Cannot build without a private value");
@@ -107,7 +108,7 @@ public final class Sm2HybridPrivateKey extends HybridPrivateKey {
             // Validates that the private value is exactly 32 bytes and that the scalar lies in
             // [1, n-1], where n is the order of the sm2p256v1 base point.
             Sm2KeyUtil.validatePrivateScalar(
-                privateValue.toByteArray(InsecureSecretKeyAccess.get()));
+                    privateValue.toByteArray(InsecureSecretKeyAccess.get()));
             return new Sm2HybridPrivateKey(publicKey, privateValue);
         }
     }

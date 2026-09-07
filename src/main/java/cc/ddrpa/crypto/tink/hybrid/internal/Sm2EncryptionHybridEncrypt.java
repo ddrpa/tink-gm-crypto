@@ -6,12 +6,13 @@ import cc.ddrpa.crypto.tink.sm2.internal.Sm2KeyUtil;
 import com.google.crypto.tink.AccessesPartialKey;
 import com.google.crypto.tink.HybridEncrypt;
 import com.google.errorprone.annotations.Immutable;
-import java.security.GeneralSecurityException;
 import org.bouncycastle.crypto.InvalidCipherTextException;
 import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.crypto.engines.SM2Engine;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.params.ParametersWithRandom;
+
+import java.security.GeneralSecurityException;
 
 /**
  * SM2 (F1) encryption with Bouncy Castle.
@@ -28,10 +29,14 @@ import org.bouncycastle.crypto.params.ParametersWithRandom;
 @Immutable
 public final class Sm2EncryptionHybridEncrypt implements HybridEncrypt {
 
-    /** Length of the C1 part: {@code 0x04 || X || Y}, see {@link Sm2Curve#UNCOMPRESSED_POINT_SIZE}. */
+    /**
+     * Length of the C1 part: {@code 0x04 || X || Y}, see {@link Sm2Curve#UNCOMPRESSED_POINT_SIZE}.
+     */
     private static final int C1_SIZE = Sm2Curve.UNCOMPRESSED_POINT_SIZE;
 
-    /** Length of the C3 part: the 32 byte SM3 digest. */
+    /**
+     * Length of the C3 part: the 32 byte SM3 digest.
+     */
     private static final int C3_SIZE = 32;
 
     @SuppressWarnings("Immutable")
@@ -40,7 +45,7 @@ public final class Sm2EncryptionHybridEncrypt implements HybridEncrypt {
     private final byte[] outputPrefix;
 
     private Sm2EncryptionHybridEncrypt(
-        ECPublicKeyParameters publicKeyParams, byte[] outputPrefix) {
+            ECPublicKeyParameters publicKeyParams, byte[] outputPrefix) {
         this.publicKeyParams = publicKeyParams;
         this.outputPrefix = outputPrefix;
     }
@@ -50,24 +55,24 @@ public final class Sm2EncryptionHybridEncrypt implements HybridEncrypt {
      */
     @AccessesPartialKey
     public static HybridEncrypt create(Sm2EncryptionPublicKey key)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         byte[] outputPrefix = key.getOutputPrefix().toByteArray();
         // Validates the point (length and on-curve) and converts it to Bouncy Castle parameters.
         ECPublicKeyParameters publicKeyParams =
-            Sm2KeyUtil.toPublicKeyParameters(key.getPublicKey().toByteArray());
+                Sm2KeyUtil.toPublicKeyParameters(key.getPublicKey().toByteArray());
         return new Sm2EncryptionHybridEncrypt(publicKeyParams, outputPrefix);
     }
 
     @Override
     public byte[] encrypt(byte[] plaintext, byte[] contextInfo)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         if (plaintext == null) {
             throw new NullPointerException("plaintext is null");
         }
         if (contextInfo != null && contextInfo.length != 0) {
             throw new GeneralSecurityException(
-                "Standard SM2 ciphertext does not support associated data "
-                    + "(contextInfo must be empty)");
+                    "Standard SM2 ciphertext does not support associated data "
+                            + "(contextInfo must be empty)");
         }
         if (plaintext.length == 0) {
             // The SM2Engine rejects zero-length inputs; reject here with a uniform error.
@@ -82,8 +87,8 @@ public final class Sm2EncryptionHybridEncrypt implements HybridEncrypt {
         byte[] ciphertextBody;
         try {
             engine.init(
-                true,
-                new ParametersWithRandom(publicKeyParams, Sm2KeyUtil.getSecureRandom()));
+                    true,
+                    new ParametersWithRandom(publicKeyParams, Sm2KeyUtil.getSecureRandom()));
             ciphertextBody = engine.processBlock(plaintext, 0, plaintext.length);
         } catch (InvalidCipherTextException e) {
             throw new GeneralSecurityException("Encryption failed", e);
@@ -93,7 +98,7 @@ public final class Sm2EncryptionHybridEncrypt implements HybridEncrypt {
         byte[] output = new byte[outputPrefix.length + ciphertextBody.length];
         System.arraycopy(outputPrefix, 0, output, 0, outputPrefix.length);
         System.arraycopy(
-            ciphertextBody, 0, output, outputPrefix.length, ciphertextBody.length);
+                ciphertextBody, 0, output, outputPrefix.length, ciphertextBody.length);
         return output;
     }
 }

@@ -3,9 +3,10 @@ package cc.ddrpa.crypto.tink.signature;
 import com.google.crypto.tink.signature.SignatureParameters;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.Immutable;
+
+import javax.annotation.Nullable;
 import java.security.GeneralSecurityException;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * Describes the parameters of an {@link Sm2SignaturePrivateKey} / {@link Sm2SignaturePublicKey}.
@@ -65,9 +66,9 @@ public final class Sm2SignatureParameters extends SignatureParameters {
     public static final class Variant {
 
         public static final Sm2SignatureParameters.Variant TINK = new Sm2SignatureParameters.Variant(
-            "TINK");
+                "TINK");
         public static final Sm2SignatureParameters.Variant NO_PREFIX =
-            new Sm2SignatureParameters.Variant("NO_PREFIX");
+                new Sm2SignatureParameters.Variant("NO_PREFIX");
 
         private final String name;
 

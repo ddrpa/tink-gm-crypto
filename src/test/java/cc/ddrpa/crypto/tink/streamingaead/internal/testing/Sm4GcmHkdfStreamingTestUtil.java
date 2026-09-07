@@ -1,7 +1,5 @@
 package cc.ddrpa.crypto.tink.streamingaead.internal.testing;
 
-import static com.google.crypto.tink.internal.TinkBugException.exceptionIsBug;
-
 import cc.ddrpa.crypto.tink.streamingaead.Sm4GcmHkdfStreamingKey;
 import cc.ddrpa.crypto.tink.streamingaead.Sm4GcmHkdfStreamingParameters;
 import com.google.crypto.tink.AccessesPartialKey;
@@ -9,8 +7,11 @@ import com.google.crypto.tink.InsecureSecretKeyAccess;
 import com.google.crypto.tink.subtle.Bytes;
 import com.google.crypto.tink.subtle.Hex;
 import com.google.crypto.tink.util.SecretBytes;
+
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
+
+import static com.google.crypto.tink.internal.TinkBugException.exceptionIsBug;
 
 /**
  * Test vectors for Sm4GcmHkdf StreamingAEAD.
@@ -26,16 +27,16 @@ public final class Sm4GcmHkdfStreamingTestUtil {
      */
     private static StreamingAeadTestVector createTestVector0() throws GeneralSecurityException {
         Sm4GcmHkdfStreamingParameters parameters = Sm4GcmHkdfStreamingParameters.builder()
-            .setKeySizeBytes(16)
-            .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA1)
-            .setCiphertextSegmentSizeBytes(64)
-            .setDerivedSm4GcmKeySizeBytes(16)
-            .build();
+                .setKeySizeBytes(16)
+                .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA1)
+                .setCiphertextSegmentSizeBytes(64)
+                .setDerivedSm4GcmKeySizeBytes(16)
+                .build();
         Sm4GcmHkdfStreamingKey key = Sm4GcmHkdfStreamingKey.create(parameters,
-            SecretBytes.copyFrom(Hex.decode("6eb56cdc726dfbe5d57f2fcdc6e9345b"),
-                InsecureSecretKeyAccess.get()));
+                SecretBytes.copyFrom(Hex.decode("6eb56cdc726dfbe5d57f2fcdc6e9345b"),
+                        InsecureSecretKeyAccess.get()));
         byte[] plaintext = "This is a fairly long plaintext. It is of the exact length to create three output blocks. ".getBytes(
-            StandardCharsets.UTF_8);
+                StandardCharsets.UTF_8);
         byte[] headerLength = Hex.decode("18");
         byte[] salt = Hex.decode("93b3af5e14ab378d065addfc8484da64");
         byte[] noncePrefix = Hex.decode("2c0862877baea8");
@@ -52,80 +53,80 @@ public final class Sm4GcmHkdfStreamingTestUtil {
     // Empty plaintext, empty aad.
     private static StreamingAeadTestVector createTestVector1() throws GeneralSecurityException {
         Sm4GcmHkdfStreamingParameters parameters = Sm4GcmHkdfStreamingParameters.builder()
-            .setKeySizeBytes(16)
-            .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA1)
-            .setCiphertextSegmentSizeBytes(64)
-            .setDerivedSm4GcmKeySizeBytes(16)
-            .build();
+                .setKeySizeBytes(16)
+                .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA1)
+                .setCiphertextSegmentSizeBytes(64)
+                .setDerivedSm4GcmKeySizeBytes(16)
+                .build();
         Sm4GcmHkdfStreamingKey key = Sm4GcmHkdfStreamingKey.create(parameters,
-            SecretBytes.copyFrom(Hex.decode("6eb56cdc726dfbe5d57f2fcdc6e9345b"),
-                InsecureSecretKeyAccess.get()));
+                SecretBytes.copyFrom(Hex.decode("6eb56cdc726dfbe5d57f2fcdc6e9345b"),
+                        InsecureSecretKeyAccess.get()));
         byte[] plaintext = new byte[0];
         byte[] aad = new byte[0];
         byte[] ciphertext = Hex.decode(
-            "1893b3af5e14ab378d065addfc8484da642c0862877baea83ac8aa5752e37875e1305b4ef7f1814a");
+                "1893b3af5e14ab378d065addfc8484da642c0862877baea83ac8aa5752e37875e1305b4ef7f1814a");
         return new StreamingAeadTestVector(key, plaintext, aad, ciphertext);
     }
 
     // SHA256
     private static StreamingAeadTestVector createTestVector2() throws GeneralSecurityException {
         Sm4GcmHkdfStreamingParameters parameters = Sm4GcmHkdfStreamingParameters.builder()
-            .setKeySizeBytes(16)
-            .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA256)
-            .setCiphertextSegmentSizeBytes(64)
-            .setDerivedSm4GcmKeySizeBytes(16)
-            .build();
+                .setKeySizeBytes(16)
+                .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA256)
+                .setCiphertextSegmentSizeBytes(64)
+                .setDerivedSm4GcmKeySizeBytes(16)
+                .build();
         Sm4GcmHkdfStreamingKey key = Sm4GcmHkdfStreamingKey.create(parameters,
-            SecretBytes.copyFrom(Hex.decode("6eb56cdc726dfbe5d57f2fcdc6e9345b"),
-                InsecureSecretKeyAccess.get()));
+                SecretBytes.copyFrom(Hex.decode("6eb56cdc726dfbe5d57f2fcdc6e9345b"),
+                        InsecureSecretKeyAccess.get()));
         byte[] plaintext = new byte[0];
         byte[] aad = new byte[0];
         byte[] ciphertext = Hex.decode(
-            "1893b3af5e14ab378d065addfc8484da642c0862877baea82f24be445ab65c9a511b84d38b0e7cc4");
+                "1893b3af5e14ab378d065addfc8484da642c0862877baea82f24be445ab65c9a511b84d38b0e7cc4");
         return new StreamingAeadTestVector(key, plaintext, aad, ciphertext);
     }
 
     // SHA512
     private static StreamingAeadTestVector createTestVector3() throws GeneralSecurityException {
         Sm4GcmHkdfStreamingParameters parameters = Sm4GcmHkdfStreamingParameters.builder()
-            .setKeySizeBytes(16)
-            .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA512)
-            .setCiphertextSegmentSizeBytes(64)
-            .setDerivedSm4GcmKeySizeBytes(16)
-            .build();
+                .setKeySizeBytes(16)
+                .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA512)
+                .setCiphertextSegmentSizeBytes(64)
+                .setDerivedSm4GcmKeySizeBytes(16)
+                .build();
         Sm4GcmHkdfStreamingKey key = Sm4GcmHkdfStreamingKey.create(parameters,
-            SecretBytes.copyFrom(Hex.decode("6eb56cdc726dfbe5d57f2fcdc6e9345b"),
-                InsecureSecretKeyAccess.get()));
+                SecretBytes.copyFrom(Hex.decode("6eb56cdc726dfbe5d57f2fcdc6e9345b"),
+                        InsecureSecretKeyAccess.get()));
         byte[] plaintext = new byte[0];
         byte[] aad = new byte[0];
         byte[] ciphertext = Hex.decode(
-            "1893b3af5e14ab378d065addfc8484da642c0862877baea874042f46fbfbc91835e1aa5c781dfcd8");
+                "1893b3af5e14ab378d065addfc8484da642c0862877baea874042f46fbfbc91835e1aa5c781dfcd8");
         return new StreamingAeadTestVector(key, plaintext, aad, ciphertext);
     }
 
     // 32 byte key
     private static StreamingAeadTestVector createTestVector4() throws GeneralSecurityException {
         Sm4GcmHkdfStreamingParameters parameters = Sm4GcmHkdfStreamingParameters.builder()
-            .setKeySizeBytes(32)
-            .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA1)
-            .setCiphertextSegmentSizeBytes(64)
-            .setDerivedSm4GcmKeySizeBytes(16)
-            .build();
+                .setKeySizeBytes(32)
+                .setHkdfHashType(Sm4GcmHkdfStreamingParameters.HashType.SHA1)
+                .setCiphertextSegmentSizeBytes(64)
+                .setDerivedSm4GcmKeySizeBytes(16)
+                .build();
         Sm4GcmHkdfStreamingKey key = Sm4GcmHkdfStreamingKey.create(parameters, SecretBytes.copyFrom(
-            Hex.decode("00112233445566778899aabbccddeeff6eb56cdc726dfbe5d57f2fcdc6e9345b"),
-            InsecureSecretKeyAccess.get()));
+                Hex.decode("00112233445566778899aabbccddeeff6eb56cdc726dfbe5d57f2fcdc6e9345b"),
+                InsecureSecretKeyAccess.get()));
         byte[] plaintext = new byte[0];
         byte[] aad = new byte[0];
         byte[] ciphertext = Hex.decode(
-            "1893b3af5e14ab378d065addfc8484da642c0862877baea8f4420a463b0bc229ccac58cef80e3c95");
+                "1893b3af5e14ab378d065addfc8484da642c0862877baea8f4420a463b0bc229ccac58cef80e3c95");
         return new StreamingAeadTestVector(key, plaintext, aad, ciphertext);
     }
 
     public static StreamingAeadTestVector[] createSm4GcmHkdfTestVectors() {
         return exceptionIsBug(
-            () -> new StreamingAeadTestVector[]{
-                createTestVector0(),
-                createTestVector1(), createTestVector2(), createTestVector3(), createTestVector4(),
-            });
+                () -> new StreamingAeadTestVector[]{
+                        createTestVector0(),
+                        createTestVector1(), createTestVector2(), createTestVector3(), createTestVector4(),
+                });
     }
 }

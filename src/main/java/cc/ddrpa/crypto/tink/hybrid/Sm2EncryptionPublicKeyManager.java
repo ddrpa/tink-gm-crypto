@@ -6,10 +6,10 @@ package cc.ddrpa.crypto.tink.hybrid;
  */
 final class Sm2EncryptionPublicKeyManager {
 
-    static String getKeyType() {
-        return "type.googleapis.com/ddrpa.crypto.tink.Sm2EncryptionPublicKey";
+    private Sm2EncryptionPublicKeyManager() {
     }
 
-    private Sm2EncryptionPublicKeyManager() {
+    static String getKeyType() {
+        return "type.googleapis.com/ddrpa.crypto.tink.Sm2EncryptionPublicKey";
     }
 }

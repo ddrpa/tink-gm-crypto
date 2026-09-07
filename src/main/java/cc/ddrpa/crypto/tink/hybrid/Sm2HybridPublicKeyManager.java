@@ -6,10 +6,10 @@ package cc.ddrpa.crypto.tink.hybrid;
  */
 final class Sm2HybridPublicKeyManager {
 
-    static String getKeyType() {
-        return "type.googleapis.com/ddrpa.crypto.tink.Sm2HybridPublicKey";
+    private Sm2HybridPublicKeyManager() {
     }
 
-    private Sm2HybridPublicKeyManager() {
+    static String getKeyType() {
+        return "type.googleapis.com/ddrpa.crypto.tink.Sm2HybridPublicKey";
     }
 }

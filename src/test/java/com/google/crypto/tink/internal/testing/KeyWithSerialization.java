@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
 
 package com.google.crypto.tink.internal.testing;
 
@@ -21,22 +21,21 @@ import com.google.crypto.tink.ProtoKeySerialization;
 
 /** Represents a {@link Key} together with a corresponding {@ProtoKeySerialization} for testing. */
 public final class KeyWithSerialization {
-  /** Constructs a new KeyWithSerialization. */
-  public KeyWithSerialization(Key key, ProtoKeySerialization serializedKey) {
-    this.key = key;
-    this.serializedKey = serializedKey;
-  }
+    private final Key key;
+    private final ProtoKeySerialization serializedKey;
+    /** Constructs a new KeyWithSerialization. */
+    public KeyWithSerialization(Key key, ProtoKeySerialization serializedKey) {
+        this.key = key;
+        this.serializedKey = serializedKey;
+    }
 
-  private final Key key;
-  private final ProtoKeySerialization serializedKey;
+    /** Returns the {@link Key}. */
+    public Key getKey() {
+        return key;
+    }
 
-  /** Returns the {@link Key}. */
-  public Key getKey() {
-    return key;
-  }
-
-  /** Returns the {@link ProtoKeySerialization}. */
-  public ProtoKeySerialization getSerialization() {
-    return serializedKey;
-  }
+    /** Returns the {@link ProtoKeySerialization}. */
+    public ProtoKeySerialization getSerialization() {
+        return serializedKey;
+    }
 }

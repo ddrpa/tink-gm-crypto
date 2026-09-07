@@ -10,6 +10,7 @@ import com.google.crypto.tink.KeysetHandle;
 import com.google.crypto.tink.aead.AeadConfig;
 import com.google.crypto.tink.streamingaead.StreamingAeadConfig;
 import com.google.crypto.tink.util.SecretBytes;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -40,39 +41,39 @@ public class CreateClearTextKeyset {
         // 2. 创建多个密钥
         // 主密钥
         Sm4GcmParameters primaryParams = Sm4GcmParameters.builder()
-            .setIvSizeBytes(12)
-            .setTagSizeBytes(16)
-            .setVariant(Sm4GcmParameters.Variant.TINK)
-            .build();
+                .setIvSizeBytes(12)
+                .setTagSizeBytes(16)
+                .setVariant(Sm4GcmParameters.Variant.TINK)
+                .build();
         Sm4GcmKey primaryKey = Sm4GcmKey.builder()
-            .setParameters(primaryParams)
-            .setKeyBytes(SecretBytes.randomBytes(16))
-            .setIdRequirement(random.nextInt())
-            .build();
+                .setParameters(primaryParams)
+                .setKeyBytes(SecretBytes.randomBytes(16))
+                .setIdRequirement(random.nextInt())
+                .build();
 
         // 备用密钥 1
         Sm4GcmParameters backup1Params = Sm4GcmParameters.builder()
-            .setIvSizeBytes(12)
-            .setTagSizeBytes(16)
-            .setVariant(Sm4GcmParameters.Variant.TINK)
-            .build();
+                .setIvSizeBytes(12)
+                .setTagSizeBytes(16)
+                .setVariant(Sm4GcmParameters.Variant.TINK)
+                .build();
         Sm4GcmKey backup1Key = Sm4GcmKey.builder()
-            .setParameters(backup1Params)
-            .setKeyBytes(SecretBytes.randomBytes(16))
-            .setIdRequirement(random.nextInt())
-            .build();
+                .setParameters(backup1Params)
+                .setKeyBytes(SecretBytes.randomBytes(16))
+                .setIdRequirement(random.nextInt())
+                .build();
 
         // 备用密钥 2
         // 你也可以使用具名参数创建密钥，不过注意在写入密钥集时分配 ID
         KeysetHandle.Builder.Entry entryBackup2 = KeysetHandle.generateEntryFromParametersName(
-            "SM4_GCM");
+                "SM4_GCM");
 
         // 3. 创建 KeysetHandle 并添加所有密钥
         KeysetHandle handle = KeysetHandle.newBuilder()
-            .addEntry(KeysetHandle.importKey(primaryKey).makePrimary())
-            .addEntry(KeysetHandle.importKey(backup1Key))
-            .addEntry(entryBackup2.withRandomId())
-            .build();
+                .addEntry(KeysetHandle.importKey(primaryKey).makePrimary())
+                .addEntry(KeysetHandle.importKey(backup1Key))
+                .addEntry(entryBackup2.withRandomId())
+                .build();
 
         // 4. 将密钥集序列化为 JSON 并输出
         try (OutputStream os = new FileOutputStream("aead_keyset.json")) {
@@ -87,15 +88,15 @@ public class CreateClearTextKeyset {
 
         // 2. 使用具名参数创建密钥
         KeysetHandle.Builder.Entry entry1 = KeysetHandle.generateEntryFromParametersName(
-            "SM4_GCM_HKDF_1MB");
+                "SM4_GCM_HKDF_1MB");
         KeysetHandle.Builder.Entry entry2 = KeysetHandle.generateEntryFromParametersName(
-            "SM4_GCM_HKDF_4KB");
+                "SM4_GCM_HKDF_4KB");
 
         // 3. 保存到密钥集
         KeysetHandle handle = KeysetHandle.newBuilder()
-            .addEntry(entry1.makePrimary().withRandomId())
-            .addEntry(entry2.withRandomId())
-            .build();
+                .addEntry(entry1.makePrimary().withRandomId())
+                .addEntry(entry2.withRandomId())
+                .build();
 
         // 4. 序列化为 JSON 输出
         try (OutputStream os = new FileOutputStream("streaming_aead_keyset.json")) {

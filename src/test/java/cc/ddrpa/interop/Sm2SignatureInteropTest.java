@@ -1,10 +1,5 @@
 package cc.ddrpa.interop;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import cc.ddrpa.crypto.tink.signature.Sm2SignKeyManager;
 import cc.ddrpa.interop.bc.Sm2Signature;
 import cc.ddrpa.interop.testing.InteropFixtures;
@@ -12,9 +7,12 @@ import cc.ddrpa.interop.testing.InteropTink;
 import com.google.crypto.tink.PublicKeySign;
 import com.google.crypto.tink.PublicKeyVerify;
 import com.google.crypto.tink.signature.SignatureConfig;
-import java.util.Arrays;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * SM2 数字签名的跨系统互操作自检：Tink 侧 ⇄ 对方侧（纯 BouncyCastle，{@code cc.ddrpa.interop.bc.Sm2Signature}）。
@@ -33,6 +31,13 @@ class Sm2SignatureInteropTest {
     static void setUp() throws Exception {
         SignatureConfig.register();
         Sm2SignKeyManager.registerPair(true);
+    }
+
+    private static int readKeyId(byte[] prefixed) {
+        return ((prefixed[1] & 0xff) << 24)
+                | ((prefixed[2] & 0xff) << 16)
+                | ((prefixed[3] & 0xff) << 8)
+                | (prefixed[4] & 0xff);
     }
 
     // 方向一：Tink 签名 → 对方 BC 验签。
@@ -78,12 +83,5 @@ class Sm2SignatureInteropTest {
         assertEquals(FIXED_KEY_ID, keyId);
         byte[] rawSignature = Arrays.copyOfRange(signature, 5, signature.length);
         assertTrue(Sm2Signature.verify(Q, rawSignature, MESSAGE));
-    }
-
-    private static int readKeyId(byte[] prefixed) {
-        return ((prefixed[1] & 0xff) << 24)
-            | ((prefixed[2] & 0xff) << 16)
-            | ((prefixed[3] & 0xff) << 8)
-            | (prefixed[4] & 0xff);
     }
 }

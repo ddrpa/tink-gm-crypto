@@ -1,8 +1,5 @@
 package cc.ddrpa.interop.bc;
 
-import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
@@ -11,6 +8,9 @@ import org.bouncycastle.crypto.params.ParametersWithID;
 import org.bouncycastle.crypto.params.ParametersWithRandom;
 import org.bouncycastle.crypto.signers.PlainDSAEncoding;
 import org.bouncycastle.crypto.signers.SM2Signer;
+
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
 
 /**
  * 对方侧（不使用 Google Tink）的 SM2 数字签名参考实现（仅 BouncyCastle + JDK）。
@@ -29,18 +29,19 @@ import org.bouncycastle.crypto.signers.SM2Signer;
  */
 public final class Sm2Signature {
 
+    /**
+     * 签名长度：r ‖ s 各 32 字节。
+     */
+    public static final int SIGNATURE_SIZE_BYTES = 64;
+    private static final SecureRandom RANDOM = new SecureRandom();
+
     private Sm2Signature() {
     }
-
-    /** 签名长度：r ‖ s 各 32 字节。 */
-    public static final int SIGNATURE_SIZE_BYTES = 64;
-
-    private static final SecureRandom RANDOM = new SecureRandom();
 
     /**
      * 对原始消息生成 64 字节 {@code r ‖ s} 签名。
      *
-     * @param d 32 字节私钥标量
+     * @param d       32 字节私钥标量
      * @param message 原始消息（可为空数组）
      */
     public static byte[] sign(byte[] d, byte[] message) throws GeneralSecurityException {
@@ -50,15 +51,15 @@ public final class Sm2Signature {
         ECPrivateKeyParameters privateKey = Sm2BcUtil.privateKeyFromD(d);
         SM2Signer signer = new SM2Signer(new PlainDSAEncoding(), new SM3Digest());
         signer.init(
-            true,
-            new ParametersWithID(
-                new ParametersWithRandom(privateKey, RANDOM), Sm2BcUtil.DEFAULT_USER_ID));
+                true,
+                new ParametersWithID(
+                        new ParametersWithRandom(privateKey, RANDOM), Sm2BcUtil.DEFAULT_USER_ID));
         signer.update(message, 0, message.length);
         try {
             byte[] signature = signer.generateSignature();
             if (signature.length != SIGNATURE_SIZE_BYTES) {
                 throw new GeneralSecurityException(
-                    "Unexpected signature length: " + signature.length);
+                        "Unexpected signature length: " + signature.length);
             }
             return signature;
         } catch (CryptoException e) {
@@ -69,9 +70,9 @@ public final class Sm2Signature {
     /**
      * 校验 64 字节 {@code r ‖ s} 签名。
      *
-     * @param q 64 字节公钥（X ‖ Y）
+     * @param q         64 字节公钥（X ‖ Y）
      * @param signature 64 字节签名
-     * @param message 被签名的原始消息
+     * @param message   被签名的原始消息
      * @return true 表示签名有效
      * @throws IllegalArgumentException 公钥/签名长度非法时抛出
      */
@@ -81,7 +82,7 @@ public final class Sm2Signature {
         }
         if (signature.length != SIGNATURE_SIZE_BYTES) {
             throw new IllegalArgumentException(
-                "SM2 signature must be exactly " + SIGNATURE_SIZE_BYTES + " bytes (r || s)");
+                    "SM2 signature must be exactly " + SIGNATURE_SIZE_BYTES + " bytes (r || s)");
         }
         ECPublicKeyParameters publicKey = Sm2BcUtil.publicKeyFromXY(q);
         SM2Signer signer = new SM2Signer(new PlainDSAEncoding(), new SM3Digest());

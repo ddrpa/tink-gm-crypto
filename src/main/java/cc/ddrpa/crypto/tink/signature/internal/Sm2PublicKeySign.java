@@ -7,8 +7,6 @@ import com.google.crypto.tink.AccessesPartialKey;
 import com.google.crypto.tink.InsecureSecretKeyAccess;
 import com.google.crypto.tink.PublicKeySign;
 import com.google.errorprone.annotations.Immutable;
-import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import org.bouncycastle.crypto.CryptoException;
 import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
@@ -16,6 +14,9 @@ import org.bouncycastle.crypto.params.ParametersWithID;
 import org.bouncycastle.crypto.params.ParametersWithRandom;
 import org.bouncycastle.crypto.signers.PlainDSAEncoding;
 import org.bouncycastle.crypto.signers.SM2Signer;
+
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
 
 /**
  * SM2 signing with Bouncy Castle.
@@ -28,9 +29,11 @@ import org.bouncycastle.crypto.signers.SM2Signer;
 @Immutable
 public final class Sm2PublicKeySign implements PublicKeySign {
 
-    /** The default SM2 user ID ("1234567812345678" in ASCII) as defined in GB/T 32918.2. */
+    /**
+     * The default SM2 user ID ("1234567812345678" in ASCII) as defined in GB/T 32918.2.
+     */
     static final byte[] DEFAULT_USER_ID =
-        "1234567812345678".getBytes(StandardCharsets.US_ASCII);
+            "1234567812345678".getBytes(StandardCharsets.US_ASCII);
 
     @SuppressWarnings("Immutable")
     private final ECPrivateKeyParameters privateKeyParams;
@@ -47,11 +50,11 @@ public final class Sm2PublicKeySign implements PublicKeySign {
      */
     @AccessesPartialKey
     public static PublicKeySign create(Sm2SignaturePrivateKey key)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         byte[] outputPrefix = key.getOutputPrefix().toByteArray();
         ECPrivateKeyParameters privateKeyParams =
-            Sm2KeyUtil.toPrivateKeyParameters(
-                key.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get()));
+                Sm2KeyUtil.toPrivateKeyParameters(
+                        key.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get()));
         // Validate the public key point early so that malformed keys fail fast when the primitive
         // is created instead of producing signatures which can never verify.
         Sm2SignaturePublicKey publicKey = key.getPublicKey();
@@ -66,10 +69,10 @@ public final class Sm2PublicKeySign implements PublicKeySign {
         }
         SM2Signer signer = new SM2Signer(new PlainDSAEncoding(), new SM3Digest());
         signer.init(
-            true,
-            new ParametersWithID(
-                new ParametersWithRandom(privateKeyParams, Sm2KeyUtil.getSecureRandom()),
-                DEFAULT_USER_ID));
+                true,
+                new ParametersWithID(
+                        new ParametersWithRandom(privateKeyParams, Sm2KeyUtil.getSecureRandom()),
+                        DEFAULT_USER_ID));
         signer.update(data, 0, data.length);
         byte[] signature;
         try {

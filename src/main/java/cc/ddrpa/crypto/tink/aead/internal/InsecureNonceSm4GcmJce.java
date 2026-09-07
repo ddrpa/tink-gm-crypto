@@ -18,10 +18,11 @@ package cc.ddrpa.crypto.tink.aead.internal;
 
 import cc.ddrpa.crypto.tink.aead.Sm4GcmJce;
 import com.google.crypto.tink.config.internal.TinkFipsUtil;
-import java.security.GeneralSecurityException;
-import java.security.spec.AlgorithmParameterSpec;
+
 import javax.crypto.Cipher;
 import javax.crypto.SecretKey;
+import java.security.GeneralSecurityException;
+import java.security.spec.AlgorithmParameterSpec;
 
 /**
  * Insecure version of {@link Sm4GcmJce} that allows the caller to set the IV.
@@ -29,7 +30,7 @@ import javax.crypto.SecretKey;
 public final class InsecureNonceSm4GcmJce {
 
     public static final TinkFipsUtil.AlgorithmFipsCompatibility FIPS =
-        TinkFipsUtil.AlgorithmFipsCompatibility.ALGORITHM_REQUIRES_BORINGCRYPTO;
+            TinkFipsUtil.AlgorithmFipsCompatibility.ALGORITHM_REQUIRES_BORINGCRYPTO;
 
     // All instances of this class use a 12-byte IV and a 16-byte tag.
     public static final int IV_SIZE_IN_BYTES = Sm4GcmJceUtil.IV_SIZE_IN_BYTES;
@@ -40,7 +41,7 @@ public final class InsecureNonceSm4GcmJce {
     public InsecureNonceSm4GcmJce(final byte[] key) throws GeneralSecurityException {
         if (!FIPS.isCompatible()) {
             throw new GeneralSecurityException(
-                "Can not use SM4-GCM in FIPS-mode, as BoringCrypto module is not available.");
+                    "Can not use SM4-GCM in FIPS-mode, as BoringCrypto module is not available.");
         }
         this.keySpec = Sm4GcmJceUtil.getSecretKey(key);
     }
@@ -49,7 +50,7 @@ public final class InsecureNonceSm4GcmJce {
      * Encrypts {@code plaintext} with {@code iv} and {@code associatedData}.
      */
     public byte[] encrypt(final byte[] iv, final byte[] plaintext, final byte[] associatedData)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         return encrypt(iv, plaintext, /* ciphertextOffset= */ 0, associatedData);
     }
 
@@ -60,8 +61,8 @@ public final class InsecureNonceSm4GcmJce {
      * returned byte array.
      */
     public byte[] encrypt(
-        final byte[] iv, final byte[] plaintext, int ciphertextOffset, final byte[] associatedData)
-        throws GeneralSecurityException {
+            final byte[] iv, final byte[] plaintext, int ciphertextOffset, final byte[] associatedData)
+            throws GeneralSecurityException {
         if (iv.length != IV_SIZE_IN_BYTES) {
             throw new GeneralSecurityException("iv is wrong size");
         }
@@ -89,7 +90,7 @@ public final class InsecureNonceSm4GcmJce {
      * Decrypts {@code ciphertext} with {@code iv} and {@code associatedData}.
      */
     public byte[] decrypt(final byte[] iv, final byte[] ciphertext, final byte[] associatedData)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         return decrypt(iv, ciphertext, /* ciphertextOffset= */ 0, associatedData);
     }
 
@@ -100,11 +101,11 @@ public final class InsecureNonceSm4GcmJce {
      * ciphertextWithPrefix}.
      */
     public byte[] decrypt(
-        final byte[] iv,
-        final byte[] ciphertextWithPrefix,
-        int ciphertextOffset,
-        final byte[] associatedData)
-        throws GeneralSecurityException {
+            final byte[] iv,
+            final byte[] ciphertextWithPrefix,
+            int ciphertextOffset,
+            final byte[] associatedData)
+            throws GeneralSecurityException {
         if (iv.length != IV_SIZE_IN_BYTES) {
             throw new GeneralSecurityException("iv is wrong size");
         }
@@ -118,6 +119,6 @@ public final class InsecureNonceSm4GcmJce {
             localCipher.updateAAD(associatedData);
         }
         return localCipher.doFinal(
-            ciphertextWithPrefix, ciphertextOffset, ciphertextWithPrefix.length - ciphertextOffset);
+                ciphertextWithPrefix, ciphertextOffset, ciphertextWithPrefix.length - ciphertextOffset);
     }
 }

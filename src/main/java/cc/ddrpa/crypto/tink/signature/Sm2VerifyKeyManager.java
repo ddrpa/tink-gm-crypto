@@ -6,10 +6,10 @@ package cc.ddrpa.crypto.tink.signature;
  */
 final class Sm2VerifyKeyManager {
 
-    static String getKeyType() {
-        return "type.googleapis.com/ddrpa.crypto.tink.Sm2SignaturePublicKey";
+    private Sm2VerifyKeyManager() {
     }
 
-    private Sm2VerifyKeyManager() {
+    static String getKeyType() {
+        return "type.googleapis.com/ddrpa.crypto.tink.Sm2SignaturePublicKey";
     }
 }

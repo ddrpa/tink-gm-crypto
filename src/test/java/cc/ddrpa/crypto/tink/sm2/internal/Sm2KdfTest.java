@@ -1,14 +1,13 @@
 package cc.ddrpa.crypto.tink.sm2.internal;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import org.bouncycastle.crypto.digests.SM3Digest;
+import org.junit.jupiter.api.Test;
 
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
-import org.bouncycastle.crypto.digests.SM3Digest;
-import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Tests for {@link Sm2Kdf}.
@@ -20,8 +19,8 @@ class Sm2KdfTest {
 
     private static byte[] referenceHash(byte[] z, int counter) {
         SM3Digest digest = new SM3Digest();
-        byte[] counterBytes = new byte[] {
-            (byte) (counter >>> 24), (byte) (counter >>> 16), (byte) (counter >>> 8), (byte) counter};
+        byte[] counterBytes = new byte[]{
+                (byte) (counter >>> 24), (byte) (counter >>> 16), (byte) (counter >>> 8), (byte) counter};
         digest.update(z, 0, z.length);
         digest.update(counterBytes, 0, counterBytes.length);
         byte[] hash = new byte[Sm2Kdf.SM3_DIGEST_SIZE];
@@ -44,7 +43,7 @@ class Sm2KdfTest {
         assertArrayEquals(reference, Sm2Kdf.derive(z, Sm2Kdf.SM3_DIGEST_SIZE));
         // 截取：16 字节输出应等于前 16 字节。
         assertArrayEquals(
-            Arrays.copyOf(reference, 16), Sm2Kdf.derive(z, 16));
+                Arrays.copyOf(reference, 16), Sm2Kdf.derive(z, 16));
     }
 
     @Test
@@ -54,7 +53,7 @@ class Sm2KdfTest {
         assertArrayEquals(referenceHash(z, 1), Arrays.copyOfRange(output, 0, 32));
         assertArrayEquals(referenceHash(z, 2), Arrays.copyOfRange(output, 32, 64));
         assertArrayEquals(
-            Arrays.copyOf(referenceHash(z, 3), 5), Arrays.copyOfRange(output, 64, 69));
+                Arrays.copyOf(referenceHash(z, 3), 5), Arrays.copyOfRange(output, 64, 69));
     }
 
     @Test
@@ -63,7 +62,7 @@ class Sm2KdfTest {
         byte[] z2 = new byte[64];
         z2[63] = 1;
         assertArrayEquals(Sm2Kdf.derive(z1, 40), Sm2Kdf.derive(z1, 40));
-        assertTrue(!Arrays.equals(Sm2Kdf.derive(z1, 40), Sm2Kdf.derive(z2, 40)));
+        assertFalse(Arrays.equals(Sm2Kdf.derive(z1, 40), Sm2Kdf.derive(z2, 40)));
     }
 
     @Test

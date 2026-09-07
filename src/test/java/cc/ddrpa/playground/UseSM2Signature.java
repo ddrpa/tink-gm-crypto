@@ -1,22 +1,18 @@
 package cc.ddrpa.playground;
 
-import static org.junit.Assert.assertTrue;
-
 import cc.ddrpa.crypto.tink.signature.Sm2SignKeyManager;
-import com.google.crypto.tink.CleartextKeysetHandle;
-import com.google.crypto.tink.JsonKeysetReader;
-import com.google.crypto.tink.KeysetHandle;
-import com.google.crypto.tink.PublicKeySign;
-import com.google.crypto.tink.PublicKeyVerify;
-import com.google.crypto.tink.RegistryConfiguration;
+import com.google.crypto.tink.*;
 import com.google.crypto.tink.signature.SignatureConfig;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import static org.junit.Assert.assertTrue;
 
 /**
  * SM2 数字签名使用示例：先用 {@link CreateSM2Keysets} 生成密钥集文件，再运行本类。
@@ -27,8 +23,8 @@ import org.junit.Test;
 public class UseSM2Signature {
 
     private static final byte[] MESSAGE =
-        "SM2 椭圆曲线公钥密码算法基于 256 位椭圆曲线，数字签名算法见 GB/T 32918.2-2016。"
-            .getBytes(StandardCharsets.UTF_8);
+            "SM2 椭圆曲线公钥密码算法基于 256 位椭圆曲线，数字签名算法见 GB/T 32918.2-2016。"
+                    .getBytes(StandardCharsets.UTF_8);
 
     private static PublicKeySign signer;
     private static PublicKeyVerify verifier;
@@ -41,12 +37,12 @@ public class UseSM2Signature {
         Sm2SignKeyManager.registerPair(false);
         try (InputStream ins = new FileInputStream("sm2_signature_keyset.json")) {
             KeysetHandle privateHandle = CleartextKeysetHandle.read(
-                JsonKeysetReader.withInputStream(ins));
+                    JsonKeysetReader.withInputStream(ins));
             signer = privateHandle.getPrimitive(RegistryConfiguration.get(), PublicKeySign.class);
         }
         try (InputStream ins = new FileInputStream("sm2_signature_public_keyset.json")) {
             KeysetHandle publicHandle = CleartextKeysetHandle.read(
-                JsonKeysetReader.withInputStream(ins));
+                    JsonKeysetReader.withInputStream(ins));
             verifier = publicHandle.getPrimitive(RegistryConfiguration.get(), PublicKeyVerify.class);
         }
     }

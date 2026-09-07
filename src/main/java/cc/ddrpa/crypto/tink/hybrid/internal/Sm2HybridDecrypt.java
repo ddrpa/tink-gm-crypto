@@ -1,7 +1,5 @@
 package cc.ddrpa.crypto.tink.hybrid.internal;
 
-import static com.google.crypto.tink.internal.Util.isPrefix;
-
 import cc.ddrpa.crypto.tink.aead.internal.Sm4GcmJceUtil;
 import cc.ddrpa.crypto.tink.hybrid.Sm2HybridPrivateKey;
 import cc.ddrpa.crypto.tink.sm2.internal.Sm2Curve;
@@ -11,15 +9,18 @@ import com.google.crypto.tink.AccessesPartialKey;
 import com.google.crypto.tink.HybridDecrypt;
 import com.google.crypto.tink.InsecureSecretKeyAccess;
 import com.google.errorprone.annotations.Immutable;
+import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
+import org.bouncycastle.jce.provider.BouncyCastleProvider;
+import org.bouncycastle.math.ec.ECPoint;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
 import java.security.GeneralSecurityException;
 import java.security.Security;
 import java.security.spec.AlgorithmParameterSpec;
 import java.util.Arrays;
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
-import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.bouncycastle.math.ec.ECPoint;
+
+import static com.google.crypto.tink.internal.Util.isPrefix;
 
 /**
  * SM2 hybrid decryption (F2, "SM2-KEM + SM4-GCM DEM") with Bouncy Castle and the JCE SM4-GCM
@@ -39,18 +40,26 @@ import org.bouncycastle.math.ec.ECPoint;
 @Immutable
 public final class Sm2HybridDecrypt implements HybridDecrypt {
 
-    /** Length of the C1 part: {@code 0x04 || X || Y}, see {@link Sm2Curve#UNCOMPRESSED_POINT_SIZE}. */
+    /**
+     * Length of the C1 part: {@code 0x04 || X || Y}, see {@link Sm2Curve#UNCOMPRESSED_POINT_SIZE}.
+     */
     private static final int C1_SIZE = Sm2Curve.UNCOMPRESSED_POINT_SIZE;
 
-    /** Length of the SM4-GCM nonce, see {@link Sm4GcmJceUtil#IV_SIZE_IN_BYTES}. */
+    /**
+     * Length of the SM4-GCM nonce, see {@link Sm4GcmJceUtil#IV_SIZE_IN_BYTES}.
+     */
     private static final int NONCE_SIZE = Sm4GcmJceUtil.IV_SIZE_IN_BYTES;
 
-    /** Size of the derived SM4 data key in bytes (128 bit). */
+    /**
+     * Size of the derived SM4 data key in bytes (128 bit).
+     */
     private static final int KEY_SIZE_BYTES = 16;
 
-    /** Minimal ciphertext body length: C1 + nonce + SM4-GCM tag (empty plaintext). */
+    /**
+     * Minimal ciphertext body length: C1 + nonce + SM4-GCM tag (empty plaintext).
+     */
     private static final int MIN_BODY_SIZE =
-        C1_SIZE + NONCE_SIZE + Sm4GcmJceUtil.TAG_SIZE_IN_BYTES;
+            C1_SIZE + NONCE_SIZE + Sm4GcmJceUtil.TAG_SIZE_IN_BYTES;
 
     static {
         Security.addProvider(new BouncyCastleProvider());
@@ -62,7 +71,7 @@ public final class Sm2HybridDecrypt implements HybridDecrypt {
     private final byte[] outputPrefix;
 
     private Sm2HybridDecrypt(
-        ECPrivateKeyParameters privateKeyParams, byte[] outputPrefix) {
+            ECPrivateKeyParameters privateKeyParams, byte[] outputPrefix) {
         this.privateKeyParams = privateKeyParams;
         this.outputPrefix = outputPrefix;
     }
@@ -72,13 +81,13 @@ public final class Sm2HybridDecrypt implements HybridDecrypt {
      */
     @AccessesPartialKey
     public static HybridDecrypt create(Sm2HybridPrivateKey key)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         byte[] outputPrefix = key.getOutputPrefix().toByteArray();
         // Validates the private scalar (length and range) and converts it to Bouncy Castle
         // parameters.
         ECPrivateKeyParameters privateKeyParams =
-            Sm2KeyUtil.toPrivateKeyParameters(
-                key.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get()));
+                Sm2KeyUtil.toPrivateKeyParameters(
+                        key.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get()));
         // Validate the public key point early so that malformed keys fail fast when the primitive
         // is created instead of producing failures which are hard to attribute.
         Sm2KeyUtil.decodePublicPoint(key.getPublicKey().getPublicKey().toByteArray());
@@ -87,7 +96,7 @@ public final class Sm2HybridDecrypt implements HybridDecrypt {
 
     @Override
     public byte[] decrypt(byte[] ciphertext, byte[] contextInfo)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         if (ciphertext == null) {
             throw new NullPointerException("ciphertext is null");
         }
@@ -102,8 +111,8 @@ public final class Sm2HybridDecrypt implements HybridDecrypt {
             // C1 is the first 65 bytes of the body; decodePoint validates that it is a valid
             // non-infinity point on the SM2 curve (any invalid C1 fails here uniformly).
             ECPoint c1Point =
-                Sm2Curve.decodePoint(
-                    Arrays.copyOfRange(ciphertext, bodyOffset, bodyOffset + C1_SIZE));
+                    Sm2Curve.decodePoint(
+                            Arrays.copyOfRange(ciphertext, bodyOffset, bodyOffset + C1_SIZE));
             // Shared point S = d * C1; the DEM key is derived from the 64 byte x2 || y2 encoding
             // of S exactly as in SM2 key agreement.
             ECPoint sharedPoint = Sm2KeyUtil.multiply(c1Point, privateKeyParams.getD());
@@ -113,7 +122,7 @@ public final class Sm2HybridDecrypt implements HybridDecrypt {
             SecretKey keySpec = Sm4GcmJceUtil.getSecretKey(demKey);
             int nonceOffset = bodyOffset + C1_SIZE;
             AlgorithmParameterSpec params =
-                Sm4GcmJceUtil.getParams(ciphertext, nonceOffset, NONCE_SIZE);
+                    Sm4GcmJceUtil.getParams(ciphertext, nonceOffset, NONCE_SIZE);
             Cipher cipher = Sm4GcmJceUtil.getThreadLocalCipher();
             cipher.init(Cipher.DECRYPT_MODE, keySpec, params);
             if (contextInfo != null && contextInfo.length != 0) {

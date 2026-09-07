@@ -12,7 +12,7 @@
 // See the License for the specified language governing permissions and
 // limitations under the License.
 //
-////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
 
 package com.google.crypto.tink.internal.testing;
 
@@ -22,10 +22,11 @@ import java.io.InputStream;
 /** Helper functions for reading test files. */
 public final class TestFiles {
 
-  /** Provides an InputStream to a test file dependency. */
-  public static InputStream openInputFile(String pathname) throws FileNotFoundException {
-    return BuildDispatchedTestCode.openInputFile(pathname);
-  }
+    private TestFiles() {
+    }
 
-  private TestFiles() {}
+    /** Provides an InputStream to a test file dependency. */
+    public static InputStream openInputFile(String pathname) throws FileNotFoundException {
+        return BuildDispatchedTestCode.openInputFile(pathname);
+    }
 }

@@ -8,15 +8,16 @@ import cc.ddrpa.crypto.tink.sm2.internal.Sm2KeyUtil;
 import com.google.crypto.tink.AccessesPartialKey;
 import com.google.crypto.tink.HybridEncrypt;
 import com.google.errorprone.annotations.Immutable;
-import java.security.GeneralSecurityException;
-import java.security.Security;
-import java.security.spec.AlgorithmParameterSpec;
-import javax.crypto.Cipher;
-import javax.crypto.SecretKey;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.bouncycastle.math.ec.ECPoint;
+
+import javax.crypto.Cipher;
+import javax.crypto.SecretKey;
+import java.security.GeneralSecurityException;
+import java.security.Security;
+import java.security.spec.AlgorithmParameterSpec;
 
 /**
  * SM2 hybrid encryption (F2, "SM2-KEM + SM4-GCM DEM") with Bouncy Castle and the JCE SM4-GCM
@@ -36,13 +37,19 @@ import org.bouncycastle.math.ec.ECPoint;
 @Immutable
 public final class Sm2HybridEncrypt implements HybridEncrypt {
 
-    /** Length of the C1 part: {@code 0x04 || X || Y}, see {@link Sm2Curve#UNCOMPRESSED_POINT_SIZE}. */
+    /**
+     * Length of the C1 part: {@code 0x04 || X || Y}, see {@link Sm2Curve#UNCOMPRESSED_POINT_SIZE}.
+     */
     private static final int C1_SIZE = Sm2Curve.UNCOMPRESSED_POINT_SIZE;
 
-    /** Length of the SM4-GCM nonce, see {@link Sm4GcmJceUtil#IV_SIZE_IN_BYTES}. */
+    /**
+     * Length of the SM4-GCM nonce, see {@link Sm4GcmJceUtil#IV_SIZE_IN_BYTES}.
+     */
     private static final int NONCE_SIZE = Sm4GcmJceUtil.IV_SIZE_IN_BYTES;
 
-    /** Size of the derived SM4 data key in bytes (128 bit). */
+    /**
+     * Size of the derived SM4 data key in bytes (128 bit).
+     */
     private static final int KEY_SIZE_BYTES = 16;
 
     static {
@@ -55,7 +62,7 @@ public final class Sm2HybridEncrypt implements HybridEncrypt {
     private final byte[] outputPrefix;
 
     private Sm2HybridEncrypt(
-        ECPublicKeyParameters publicKeyParams, byte[] outputPrefix) {
+            ECPublicKeyParameters publicKeyParams, byte[] outputPrefix) {
         this.publicKeyParams = publicKeyParams;
         this.outputPrefix = outputPrefix;
     }
@@ -65,36 +72,36 @@ public final class Sm2HybridEncrypt implements HybridEncrypt {
      */
     @AccessesPartialKey
     public static HybridEncrypt create(Sm2HybridPublicKey key)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         byte[] outputPrefix = key.getOutputPrefix().toByteArray();
         // Validates the point (length and on-curve) and converts it to Bouncy Castle parameters.
         ECPublicKeyParameters publicKeyParams =
-            Sm2KeyUtil.toPublicKeyParameters(key.getPublicKey().toByteArray());
+                Sm2KeyUtil.toPublicKeyParameters(key.getPublicKey().toByteArray());
         return new Sm2HybridEncrypt(publicKeyParams, outputPrefix);
     }
 
     @Override
     public byte[] encrypt(byte[] plaintext, byte[] contextInfo)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         if (plaintext == null) {
             throw new NullPointerException("plaintext is null");
         }
         // The ciphertext body is 65 + 12 + (plaintext.length + 16) bytes; guard against overflow
         // before allocating (compare with Sm4GcmJce.encrypt).
         if (plaintext.length > Integer.MAX_VALUE - outputPrefix.length - C1_SIZE - NONCE_SIZE
-            - Sm4GcmJceUtil.TAG_SIZE_IN_BYTES) {
+                - Sm4GcmJceUtil.TAG_SIZE_IN_BYTES) {
             throw new GeneralSecurityException("plaintext too long");
         }
         AsymmetricCipherKeyPair ephemeralKeyPair = Sm2KeyUtil.generateKeyPair();
         try {
             // C1 = ephemeral public point encoded as 0x04 || X || Y (65 bytes).
             byte[] c1 =
-                Sm2Curve.encodePoint(Sm2KeyUtil.getPublicKey(ephemeralKeyPair).getQ());
+                    Sm2Curve.encodePoint(Sm2KeyUtil.getPublicKey(ephemeralKeyPair).getQ());
             // Shared point S = k * Q, where k is the ephemeral private scalar; the DEM key is
             // derived from the 64 byte x2 || y2 encoding of S exactly as in SM2 key agreement.
             ECPoint recipientPoint = publicKeyParams.getQ();
             ECPoint sharedPoint =
-                Sm2KeyUtil.multiply(recipientPoint, Sm2KeyUtil.getPrivateKey(ephemeralKeyPair).getD());
+                    Sm2KeyUtil.multiply(recipientPoint, Sm2KeyUtil.getPrivateKey(ephemeralKeyPair).getD());
             byte[] sharedZ = Sm2Curve.encodePointWithoutPrefix(sharedPoint);
             byte[] demKey = Sm2Kdf.derive(sharedZ, KEY_SIZE_BYTES);
 
@@ -116,14 +123,14 @@ public final class Sm2HybridEncrypt implements HybridEncrypt {
             System.arraycopy(outputPrefix, 0, output, 0, outputPrefix.length);
             System.arraycopy(c1, 0, output, outputPrefix.length, C1_SIZE);
             System.arraycopy(
-                nonce, 0, output, outputPrefix.length + C1_SIZE, NONCE_SIZE);
+                    nonce, 0, output, outputPrefix.length + C1_SIZE, NONCE_SIZE);
             int written =
-                cipher.doFinal(
-                    plaintext,
-                    0,
-                    plaintext.length,
-                    output,
-                    outputPrefix.length + C1_SIZE + NONCE_SIZE);
+                    cipher.doFinal(
+                            plaintext,
+                            0,
+                            plaintext.length,
+                            output,
+                            outputPrefix.length + C1_SIZE + NONCE_SIZE);
             if (written != outputSize) {
                 throw new GeneralSecurityException("not enough data written");
             }

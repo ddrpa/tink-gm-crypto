@@ -1,26 +1,21 @@
 package cc.ddrpa.playground;
 
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
 import cc.ddrpa.crypto.tink.hybrid.Sm2EncryptionKeyManager;
 import cc.ddrpa.crypto.tink.hybrid.Sm2HybridKeyManager;
-import com.google.crypto.tink.CleartextKeysetHandle;
-import com.google.crypto.tink.HybridDecrypt;
-import com.google.crypto.tink.HybridEncrypt;
-import com.google.crypto.tink.JsonKeysetReader;
-import com.google.crypto.tink.KeysetHandle;
-import com.google.crypto.tink.RegistryConfiguration;
+import com.google.crypto.tink.*;
 import com.google.crypto.tink.hybrid.HybridDecryptWrapper;
 import com.google.crypto.tink.hybrid.HybridEncryptWrapper;
+import org.junit.BeforeClass;
+import org.junit.Test;
+
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
-import org.junit.BeforeClass;
-import org.junit.Test;
+
+import static org.junit.Assert.*;
 
 /**
  * SM2 公钥加密使用示例：先用 {@link CreateSM2Keysets} 生成密钥集文件，再运行本类。
@@ -36,8 +31,8 @@ import org.junit.Test;
 public class UseSM2Encryption {
 
     private static final byte[] PLAIN_TEXT =
-        "SM2 椭圆曲线公钥密码算法中公钥加密算法见 GB/T 32918.4-2016，密钥协商见 GB/T 32918.3。"
-            .getBytes(StandardCharsets.UTF_8);
+            "SM2 椭圆曲线公钥密码算法中公钥加密算法见 GB/T 32918.4-2016，密钥协商见 GB/T 32918.3。"
+                    .getBytes(StandardCharsets.UTF_8);
     private static final byte[] CONTEXT_INFO = "recipient@example.org".getBytes(StandardCharsets.UTF_8);
 
     private static HybridEncrypt standardEncryptor;
@@ -74,7 +69,7 @@ public class UseSM2Encryption {
     public void standardSm2RoundTrip() throws GeneralSecurityException {
         // 标准 SM2 密文不支持关联数据，contextInfo 必须为空
         byte[] ciphertext = standardEncryptor.encrypt(PLAIN_TEXT, null);
-        assertTrue(Arrays.equals(PLAIN_TEXT, standardDecryptor.decrypt(ciphertext, null)));
+        assertArrayEquals(PLAIN_TEXT, standardDecryptor.decrypt(ciphertext, null));
         // 每次加密的密文应当不同（随机临时密钥）
         assertFalse(Arrays.equals(ciphertext, standardEncryptor.encrypt(PLAIN_TEXT, null)));
     }
@@ -82,7 +77,7 @@ public class UseSM2Encryption {
     @Test
     public void hybridRoundTripWithContextInfo() throws GeneralSecurityException {
         byte[] ciphertext = hybridEncryptor.encrypt(PLAIN_TEXT, CONTEXT_INFO);
-        assertTrue(Arrays.equals(PLAIN_TEXT, hybridDecryptor.decrypt(ciphertext, CONTEXT_INFO)));
+        assertArrayEquals(PLAIN_TEXT, hybridDecryptor.decrypt(ciphertext, CONTEXT_INFO));
         // contextInfo 被认证：换一个 context 解密必须失败
         try {
             hybridDecryptor.decrypt(ciphertext, "someone-else".getBytes(StandardCharsets.UTF_8));

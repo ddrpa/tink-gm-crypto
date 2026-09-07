@@ -12,11 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
 
 package com.google.crypto.tink.internal.testing;
-
-import static com.google.common.truth.Truth.assertThat;
 
 import com.google.crypto.tink.AccessesPartialKey;
 import com.google.crypto.tink.ProtoKeySerialization;
@@ -26,60 +24,63 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import com.google.protobuf.Parser;
 
+import static com.google.common.truth.Truth.assertThat;
+
 /** Contains static assertion functions for Tink. */
 public final class Asserts {
-  /**
-   * Throws an assertion error if two {@link ProtoParametersSerialization} objects are not equal.
-   *
-   * <p>Because ProtoSerialization is not deterministic, this requires a parser for the proto
-   * message embedded in the {@code ProtoParametersSerialization}.
-   *
-   * <p>Equality of the protos is decided by message equality, see {@link
-   * com.google.protobuf.Message#equals}.
-   */
-  public static void assertEqualWhenValueParsed(
-      Parser<? extends MessageLite> parser,
-      ProtoParametersSerialization one,
-      ProtoParametersSerialization two) {
-    assertThat(one.getTypeUrl()).isEqualTo(two.getTypeUrl());
-    assertThat(one.getOutputPrefixType()).isEqualTo(two.getOutputPrefixType());
-    try {
-      MessageLite valueOne =
-          parser.parseFrom(one.getValue(), ExtensionRegistryLite.getEmptyRegistry());
-      MessageLite valueTwo =
-          parser.parseFrom(two.getValue(), ExtensionRegistryLite.getEmptyRegistry());
-      assertThat(valueOne).isEqualTo(valueTwo);
-    } catch (InvalidProtocolBufferException e) {
-      throw new AssertionError("Unable to parse value with given parser", e);
+    private Asserts() {
     }
-  }
 
-  /**
-   * Throws an assertion error if two {@link ProtoParametersSerialization} objects are not equal.
-   *
-   * <p>Because ProtoSerialization is not deterministic, this requires a parser for the proto
-   * message embedded in the {@code ProtoParametersSerialization}.
-   *
-   * <p>Equality of the protos is decided by message equality, see {@link
-   * com.google.protobuf.Message#equals}.
-   */
-  @AccessesPartialKey
-  public static void assertEqualWhenValueParsed(
-      Parser<? extends MessageLite> parser, ProtoKeySerialization one, ProtoKeySerialization two) {
-    assertThat(one.getKeyMaterialType()).isEqualTo(two.getKeyMaterialType());
-    assertThat(one.getOutputPrefixType()).isEqualTo(two.getOutputPrefixType());
-    assertThat(one.getIdRequirementOrNull()).isEqualTo(two.getIdRequirementOrNull());
-    assertThat(one.getTypeUrl()).isEqualTo(two.getTypeUrl());
-    try {
-      MessageLite valueOne =
-          parser.parseFrom(one.getValue(), ExtensionRegistryLite.getEmptyRegistry());
-      MessageLite valueTwo =
-          parser.parseFrom(two.getValue(), ExtensionRegistryLite.getEmptyRegistry());
-      assertThat(valueOne).isEqualTo(valueTwo);
-    } catch (InvalidProtocolBufferException e) {
-      throw new AssertionError("Unable to parse value with given parser", e);
+    /**
+     * Throws an assertion error if two {@link ProtoParametersSerialization} objects are not equal.
+     *
+     * <p>Because ProtoSerialization is not deterministic, this requires a parser for the proto
+     * message embedded in the {@code ProtoParametersSerialization}.
+     *
+     * <p>Equality of the protos is decided by message equality, see {@link
+     * com.google.protobuf.Message#equals}.
+     */
+    public static void assertEqualWhenValueParsed(
+            Parser<? extends MessageLite> parser,
+            ProtoParametersSerialization one,
+            ProtoParametersSerialization two) {
+        assertThat(one.getTypeUrl()).isEqualTo(two.getTypeUrl());
+        assertThat(one.getOutputPrefixType()).isEqualTo(two.getOutputPrefixType());
+        try {
+            MessageLite valueOne =
+                    parser.parseFrom(one.getValue(), ExtensionRegistryLite.getEmptyRegistry());
+            MessageLite valueTwo =
+                    parser.parseFrom(two.getValue(), ExtensionRegistryLite.getEmptyRegistry());
+            assertThat(valueOne).isEqualTo(valueTwo);
+        } catch (InvalidProtocolBufferException e) {
+            throw new AssertionError("Unable to parse value with given parser", e);
+        }
     }
-  }
 
-  private Asserts() {}
+    /**
+     * Throws an assertion error if two {@link ProtoParametersSerialization} objects are not equal.
+     *
+     * <p>Because ProtoSerialization is not deterministic, this requires a parser for the proto
+     * message embedded in the {@code ProtoParametersSerialization}.
+     *
+     * <p>Equality of the protos is decided by message equality, see {@link
+     * com.google.protobuf.Message#equals}.
+     */
+    @AccessesPartialKey
+    public static void assertEqualWhenValueParsed(
+            Parser<? extends MessageLite> parser, ProtoKeySerialization one, ProtoKeySerialization two) {
+        assertThat(one.getKeyMaterialType()).isEqualTo(two.getKeyMaterialType());
+        assertThat(one.getOutputPrefixType()).isEqualTo(two.getOutputPrefixType());
+        assertThat(one.getIdRequirementOrNull()).isEqualTo(two.getIdRequirementOrNull());
+        assertThat(one.getTypeUrl()).isEqualTo(two.getTypeUrl());
+        try {
+            MessageLite valueOne =
+                    parser.parseFrom(one.getValue(), ExtensionRegistryLite.getEmptyRegistry());
+            MessageLite valueTwo =
+                    parser.parseFrom(two.getValue(), ExtensionRegistryLite.getEmptyRegistry());
+            assertThat(valueOne).isEqualTo(valueTwo);
+        } catch (InvalidProtocolBufferException e) {
+            throw new AssertionError("Unable to parse value with given parser", e);
+        }
+    }
 }

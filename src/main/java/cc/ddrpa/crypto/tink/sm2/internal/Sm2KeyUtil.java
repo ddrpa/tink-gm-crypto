@@ -1,15 +1,15 @@
 package cc.ddrpa.crypto.tink.sm2.internal;
 
-import java.math.BigInteger;
-import java.security.GeneralSecurityException;
-import java.security.SecureRandom;
 import org.bouncycastle.crypto.AsymmetricCipherKeyPair;
 import org.bouncycastle.crypto.generators.ECKeyPairGenerator;
-import org.bouncycastle.crypto.params.ECDomainParameters;
 import org.bouncycastle.crypto.params.ECKeyGenerationParameters;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
 import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.math.ec.ECPoint;
+
+import java.math.BigInteger;
+import java.security.GeneralSecurityException;
+import java.security.SecureRandom;
 
 /**
  * SM2 密钥材质的工具类：大整数与定长字节串互转、密钥对生成、SM2 私钥/公钥参数对象的构造与校验。
@@ -31,17 +31,13 @@ public final class Sm2KeyUtil {
         return SecureRandomHolder.INSTANCE;
     }
 
-    private static final class SecureRandomHolder {
-        private static final SecureRandom INSTANCE = new SecureRandom();
-    }
-
     /**
      * 将非负 {@link BigInteger} 编码为指定长度的定长大端字节串。
      *
      * @throws GeneralSecurityException 值为负或超过 {@code length} 字节
      */
     public static byte[] toFixedLengthBytes(BigInteger value, int length)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         if (value == null || value.signum() < 0) {
             throw new GeneralSecurityException("Value must be a non-negative integer");
         }
@@ -54,7 +50,7 @@ public final class Sm2KeyUtil {
         }
         if (bigEndian.length > length) {
             throw new GeneralSecurityException(
-                "Integer does not fit into " + length + " bytes");
+                    "Integer does not fit into " + length + " bytes");
         }
         byte[] result = new byte[length];
         System.arraycopy(bigEndian, 0, result, length - bigEndian.length, bigEndian.length);
@@ -70,16 +66,20 @@ public final class Sm2KeyUtil {
     public static AsymmetricCipherKeyPair generateKeyPair() {
         ECKeyPairGenerator generator = new ECKeyPairGenerator();
         generator.init(
-            new ECKeyGenerationParameters(Sm2Curve.getDomainParameters(), getSecureRandom()));
+                new ECKeyGenerationParameters(Sm2Curve.getDomainParameters(), getSecureRandom()));
         return generator.generateKeyPair();
     }
 
-    /** @return 从密钥对中取出 SM2 公钥参数对象。 */
+    /**
+     * @return 从密钥对中取出 SM2 公钥参数对象。
+     */
     public static ECPublicKeyParameters getPublicKey(AsymmetricCipherKeyPair keyPair) {
         return (ECPublicKeyParameters) keyPair.getPublic();
     }
 
-    /** @return 从密钥对中取出 SM2 私钥参数对象。 */
+    /**
+     * @return 从密钥对中取出 SM2 私钥参数对象。
+     */
     public static ECPrivateKeyParameters getPrivateKey(AsymmetricCipherKeyPair keyPair) {
         return (ECPrivateKeyParameters) keyPair.getPrivate();
     }
@@ -93,7 +93,7 @@ public final class Sm2KeyUtil {
     public static BigInteger validatePrivateScalar(byte[] d) throws GeneralSecurityException {
         if (d == null || d.length != Sm2Curve.COORDINATE_SIZE_BYTES) {
             throw new GeneralSecurityException(
-                "SM2 private key must be exactly " + Sm2Curve.COORDINATE_SIZE_BYTES + " bytes");
+                    "SM2 private key must be exactly " + Sm2Curve.COORDINATE_SIZE_BYTES + " bytes");
         }
         BigInteger value = new BigInteger(1, d);
         if (value.signum() == 0 || value.compareTo(Sm2Curve.getDomainParameters().getN()) >= 0) {
@@ -106,7 +106,7 @@ public final class Sm2KeyUtil {
      * 从 32 字节私钥标量构造 BC 私钥参数对象（已校验）。
      */
     public static ECPrivateKeyParameters toPrivateKeyParameters(byte[] d)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         BigInteger scalar = validatePrivateScalar(d);
         return new ECPrivateKeyParameters(scalar, Sm2Curve.getDomainParameters());
     }
@@ -115,7 +115,7 @@ public final class Sm2KeyUtil {
      * 从 32 字节私钥标量构造 BC 私钥参数对象（已校验）。
      */
     public static ECPrivateKeyParameters toPrivateKeyParameters(BigInteger d)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         validatePrivateScalar(toFixedLengthBytes(d, Sm2Curve.COORDINATE_SIZE_BYTES));
         return new ECPrivateKeyParameters(d, Sm2Curve.getDomainParameters());
     }
@@ -124,25 +124,27 @@ public final class Sm2KeyUtil {
      * 从 64 字节公钥（X || Y）构造 BC 公钥参数对象（点有效性已校验）。
      */
     public static ECPublicKeyParameters toPublicKeyParameters(byte[] publicKey)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         ECPoint point = decodePublicPoint(publicKey);
         return new ECPublicKeyParameters(point, Sm2Curve.getDomainParameters());
     }
 
-    /** @return 64 字节（X || Y）公钥解码后的校验点。 */
+    /**
+     * @return 64 字节（X || Y）公钥解码后的校验点。
+     */
     public static ECPoint decodePublicPoint(byte[] publicKey) throws GeneralSecurityException {
         if (publicKey == null || publicKey.length != 2 * Sm2Curve.COORDINATE_SIZE_BYTES) {
             throw new GeneralSecurityException(
-                "SM2 public key must be exactly "
-                    + (2 * Sm2Curve.COORDINATE_SIZE_BYTES)
-                    + " bytes (X || Y)");
+                    "SM2 public key must be exactly "
+                            + (2 * Sm2Curve.COORDINATE_SIZE_BYTES)
+                            + " bytes (X || Y)");
         }
         byte[] x = new byte[Sm2Curve.COORDINATE_SIZE_BYTES];
         byte[] y = new byte[Sm2Curve.COORDINATE_SIZE_BYTES];
         System.arraycopy(
-            publicKey, 0, x, 0, Sm2Curve.COORDINATE_SIZE_BYTES);
+                publicKey, 0, x, 0, Sm2Curve.COORDINATE_SIZE_BYTES);
         System.arraycopy(
-            publicKey, Sm2Curve.COORDINATE_SIZE_BYTES, y, 0, Sm2Curve.COORDINATE_SIZE_BYTES);
+                publicKey, Sm2Curve.COORDINATE_SIZE_BYTES, y, 0, Sm2Curve.COORDINATE_SIZE_BYTES);
         return Sm2Curve.decodePoint(x, y);
     }
 
@@ -152,7 +154,7 @@ public final class Sm2KeyUtil {
      * @throws GeneralSecurityException 乘算结果为零点（无穷远点）等无效情况
      */
     public static ECPoint multiply(ECPoint point, BigInteger scalar)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         Sm2Curve.validatePublicPoint(point);
         BigInteger n = Sm2Curve.getDomainParameters().getN();
         if (scalar == null || scalar.signum() <= 0 || scalar.compareTo(n) >= 0) {
@@ -163,5 +165,9 @@ public final class Sm2KeyUtil {
             throw new GeneralSecurityException("Shared point is the point at infinity");
         }
         return result;
+    }
+
+    private static final class SecureRandomHolder {
+        private static final SecureRandom INSTANCE = new SecureRandom();
     }
 }

@@ -8,10 +8,11 @@ import com.google.crypto.tink.util.SecretBytes;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.Immutable;
 import com.google.errorprone.annotations.RestrictedApi;
+
+import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.security.GeneralSecurityException;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * Represents an SM4-GCM key used for computing AEAD.
@@ -26,10 +27,10 @@ public final class Sm4GcmKey extends AeadKey {
     private final Integer idRequirement;
 
     private Sm4GcmKey(
-        Sm4GcmParameters parameters,
-        SecretBytes keyBytes,
-        Bytes outputPrefix,
-        @Nullable Integer idRequirement) {
+            Sm4GcmParameters parameters,
+            SecretBytes keyBytes,
+            Bytes outputPrefix,
+            @Nullable Integer idRequirement) {
         this.parameters = parameters;
         this.keyBytes = keyBytes;
         this.outputPrefix = outputPrefix;
@@ -37,10 +38,10 @@ public final class Sm4GcmKey extends AeadKey {
     }
 
     @RestrictedApi(
-        explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
-        link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
-        allowedOnPath = ".*Test\\.java",
-        allowlistAnnotations = {AccessesPartialKey.class})
+            explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
+            link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
+            allowedOnPath = ".*Test\\.java",
+            allowlistAnnotations = {AccessesPartialKey.class})
     public static Sm4GcmKey.Builder builder() {
         return new Sm4GcmKey.Builder();
     }
@@ -49,10 +50,10 @@ public final class Sm4GcmKey extends AeadKey {
      * Returns the underlying key bytes.
      */
     @RestrictedApi(
-        explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
-        link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
-        allowedOnPath = ".*Test\\.java",
-        allowlistAnnotations = {AccessesPartialKey.class})
+            explanation = "Accessing parts of keys can produce unexpected incompatibilities, annotate the function with @AccessesPartialKey",
+            link = "https://developers.google.com/tink/design/access_control#accessing_partial_keys",
+            allowedOnPath = ".*Test\\.java",
+            allowlistAnnotations = {AccessesPartialKey.class})
     public SecretBytes getKeyBytes() {
         return keyBytes;
     }
@@ -81,8 +82,8 @@ public final class Sm4GcmKey extends AeadKey {
         Sm4GcmKey that = (Sm4GcmKey) o;
         // Since outputPrefix is a function of parameters, we can ignore it here.
         return that.parameters.equals(parameters)
-            && that.keyBytes.equalsSecretBytes(keyBytes)
-            && Objects.equals(that.idRequirement, idRequirement);
+                && that.keyBytes.equalsSecretBytes(keyBytes)
+                && Objects.equals(that.idRequirement, idRequirement);
     }
 
     /**
@@ -124,16 +125,16 @@ public final class Sm4GcmKey extends AeadKey {
             }
             if (parameters.getVariant() == Sm4GcmParameters.Variant.TINK) {
                 return Bytes.copyFrom(
-                    ByteBuffer.allocate(5).put((byte) 1).putInt(idRequirement).array());
+                        ByteBuffer.allocate(5).put((byte) 1).putInt(idRequirement).array());
             }
             throw new IllegalStateException(
-                "Unknown Sm4GcmParameters.Variant: " + parameters.getVariant());
+                    "Unknown Sm4GcmParameters.Variant: " + parameters.getVariant());
         }
 
         public Sm4GcmKey build() throws GeneralSecurityException {
             if (parameters == null || keyBytes == null) {
                 throw new GeneralSecurityException(
-                    "Cannot build without parameters and/or key material");
+                        "Cannot build without parameters and/or key material");
             }
 
             if (parameters.getKeySizeBytes() != keyBytes.size()) {
@@ -142,12 +143,12 @@ public final class Sm4GcmKey extends AeadKey {
 
             if (parameters.hasIdRequirement() && idRequirement == null) {
                 throw new GeneralSecurityException(
-                    "Cannot create key without ID requirement with parameters with ID requirement");
+                        "Cannot create key without ID requirement with parameters with ID requirement");
             }
 
             if (!parameters.hasIdRequirement() && idRequirement != null) {
                 throw new GeneralSecurityException(
-                    "Cannot create key with ID requirement with parameters without ID requirement");
+                        "Cannot create key with ID requirement with parameters without ID requirement");
             }
             Bytes outputPrefix = getOutputPrefix();
             return new Sm4GcmKey(parameters, keyBytes, outputPrefix, idRequirement);

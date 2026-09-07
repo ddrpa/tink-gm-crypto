@@ -1,31 +1,23 @@
 package cc.ddrpa.crypto.tink.aead;
 
-import static com.google.common.truth.Truth.assertThat;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.junit.jupiter.api.Assertions.fail;
-
-import com.google.crypto.tink.Aead;
-import com.google.crypto.tink.InsecureSecretKeyAccess;
-import com.google.crypto.tink.Key;
-import com.google.crypto.tink.KeyTemplate;
-import com.google.crypto.tink.KeyTemplates;
-import com.google.crypto.tink.KeysetHandle;
-import com.google.crypto.tink.Parameters;
-import com.google.crypto.tink.RegistryConfiguration;
+import com.google.crypto.tink.*;
 import com.google.crypto.tink.aead.AeadConfig;
 import com.google.crypto.tink.internal.KeyManagerRegistry;
 import com.google.crypto.tink.subtle.Bytes;
 import com.google.crypto.tink.subtle.Hex;
 import com.google.crypto.tink.util.SecretBytes;
-import java.io.ByteArrayInputStream;
-import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
+
+import java.io.ByteArrayInputStream;
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
+
+import static com.google.common.truth.Truth.assertThat;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Test for Sm4GcmJce and its key manager.
@@ -34,22 +26,22 @@ class Sm4GcmKeyManagerTest {
 
     // SM4-GCM 测试向量
     TestVector[] testVectors = {
-        new TestVector(
-            "Test Case 1",
-            "0123456789ABCDEFFEDCBA9876543210", // 16字节密钥
-            "0123456789ABCDEF", // 明文
-            "", // 附加数据
-            "000000000000000000000000", // 12字节IV
-            "A7B9C3D5E7F1A3B5", // 密文
-            "C7D9E1F3A5B7C9DB"), // 16字节标签
-        new TestVector(
-            "Test Case 2",
-            "0123456789ABCDEFFEDCBA9876543210",
-            "0123456789ABCDEF0123456789ABCDEF",
-            "AABBCCDD",
-            "111111111111111111111111",
-            "B8CAE1F3A5B7C9DBE1F3A5B7C9DBE1F3",
-            "D9E1F3A5B7C9DBE1")
+            new TestVector(
+                    "Test Case 1",
+                    "0123456789ABCDEFFEDCBA9876543210", // 16字节密钥
+                    "0123456789ABCDEF", // 明文
+                    "", // 附加数据
+                    "000000000000000000000000", // 12字节IV
+                    "A7B9C3D5E7F1A3B5", // 密文
+                    "C7D9E1F3A5B7C9DB"), // 16字节标签
+            new TestVector(
+                    "Test Case 2",
+                    "0123456789ABCDEFFEDCBA9876543210",
+                    "0123456789ABCDEF0123456789ABCDEF",
+                    "AABBCCDD",
+                    "111111111111111111111111",
+                    "B8CAE1F3A5B7C9DBE1F3A5B7C9DBE1F3",
+                    "D9E1F3A5B7C9DBE1")
     };
 
     @BeforeEach
@@ -66,21 +58,21 @@ class Sm4GcmKeyManagerTest {
                 continue;
             }
             Sm4GcmParameters parameters =
-                Sm4GcmParameters.builder()
-                    .setIvSizeBytes(12)
-                    .setTagSizeBytes(16)
-                    .setVariant(Sm4GcmParameters.Variant.NO_PREFIX)
-                    .build();
+                    Sm4GcmParameters.builder()
+                            .setIvSizeBytes(12)
+                            .setTagSizeBytes(16)
+                            .setVariant(Sm4GcmParameters.Variant.NO_PREFIX)
+                            .build();
             Sm4GcmKey key =
-                Sm4GcmKey.builder()
-                    .setParameters(parameters)
-                    .setKeyBytes(SecretBytes.copyFrom(t.keyValue, InsecureSecretKeyAccess.get()))
-                    .build();
+                    Sm4GcmKey.builder()
+                            .setParameters(parameters)
+                            .setKeyBytes(SecretBytes.copyFrom(t.keyValue, InsecureSecretKeyAccess.get()))
+                            .build();
             Aead aead =
-                KeysetHandle.newBuilder()
-                    .addEntry(KeysetHandle.importKey(key).makePrimary().withRandomId())
-                    .build()
-                    .getPrimitive(RegistryConfiguration.get(), Aead.class);
+                    KeysetHandle.newBuilder()
+                            .addEntry(KeysetHandle.importKey(key).makePrimary().withRandomId())
+                            .build()
+                            .getPrimitive(RegistryConfiguration.get(), Aead.class);
             try {
                 byte[] ciphertext = Bytes.concat(t.iv, t.ciphertext, t.tag);
                 byte[] plaintext = aead.decrypt(ciphertext, t.aad);
@@ -94,33 +86,33 @@ class Sm4GcmKeyManagerTest {
     @Test
     void testKeyManagerRegistered() throws Exception {
         assertThat(
-            KeyManagerRegistry.globalInstance()
-                .getKeyManager("type.googleapis.com/ddrpa.crypto.tink.Sm4GcmKey", Aead.class))
-            .isNotNull();
+                KeyManagerRegistry.globalInstance()
+                        .getKeyManager("type.googleapis.com/ddrpa.crypto.tink.Sm4GcmKey", Aead.class))
+                .isNotNull();
     }
 
     @Test
     void testSm4GcmTemplate() throws Exception {
         KeyTemplate template = Sm4GcmKeyManager.sm4GcmTemplate();
         assertThat(template.toParameters())
-            .isEqualTo(
-                Sm4GcmParameters.builder()
-                    .setIvSizeBytes(12)
-                    .setTagSizeBytes(16)
-                    .setVariant(Sm4GcmParameters.Variant.TINK)
-                    .build());
+                .isEqualTo(
+                        Sm4GcmParameters.builder()
+                                .setIvSizeBytes(12)
+                                .setTagSizeBytes(16)
+                                .setVariant(Sm4GcmParameters.Variant.TINK)
+                                .build());
     }
 
     @Test
     void testRawSm4GcmTemplate() throws Exception {
         KeyTemplate template = Sm4GcmKeyManager.rawSm4GcmTemplate();
         assertThat(template.toParameters())
-            .isEqualTo(
-                Sm4GcmParameters.builder()
-                    .setIvSizeBytes(12)
-                    .setTagSizeBytes(16)
-                    .setVariant(Sm4GcmParameters.Variant.NO_PREFIX)
-                    .build());
+                .isEqualTo(
+                        Sm4GcmParameters.builder()
+                                .setIvSizeBytes(12)
+                                .setTagSizeBytes(16)
+                                .setVariant(Sm4GcmParameters.Variant.NO_PREFIX)
+                                .build());
     }
 
     @Test
@@ -138,34 +130,34 @@ class Sm4GcmKeyManagerTest {
         KeysetHandle h = KeysetHandle.generateNew(KeyTemplates.get(templateName));
         assertThat(h.size()).isEqualTo(1);
         assertThat(h.getAt(0).getKey().getParameters())
-            .isEqualTo(KeyTemplates.get(templateName).toParameters());
+                .isEqualTo(KeyTemplates.get(templateName).toParameters());
     }
 
     @ParameterizedTest
     @ValueSource(strings = {"SM4_GCM", "SM4_GCM_RAW"})
     void testCreateKeyFromRandomness(String templateName) throws Exception {
         byte[] keyMaterial =
-            new byte[]{
-                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
-                23, 24,
-                25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35
-            };
+                new byte[]{
+                        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22,
+                        23, 24,
+                        25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35
+                };
         Sm4GcmParameters parameters = (Sm4GcmParameters) KeyTemplates.get(templateName)
-            .toParameters();
+                .toParameters();
         Sm4GcmKey key =
-            Sm4GcmKeyManager.createSm4GcmKeyFromRandomness(
-                parameters,
-                new ByteArrayInputStream(keyMaterial),
-                parameters.hasIdRequirement() ? 123 : null,
-                InsecureSecretKeyAccess.get());
+                Sm4GcmKeyManager.createSm4GcmKeyFromRandomness(
+                        parameters,
+                        new ByteArrayInputStream(keyMaterial),
+                        parameters.hasIdRequirement() ? 123 : null,
+                        InsecureSecretKeyAccess.get());
         byte[] truncatedKeyMaterial = Arrays.copyOf(keyMaterial, 16); // SM4 uses 16-byte keys
         Key expectedKey =
-            Sm4GcmKey.builder()
-                .setParameters(parameters)
-                .setIdRequirement(parameters.hasIdRequirement() ? 123 : null)
-                .setKeyBytes(
-                    SecretBytes.copyFrom(truncatedKeyMaterial, InsecureSecretKeyAccess.get()))
-                .build();
+                Sm4GcmKey.builder()
+                        .setParameters(parameters)
+                        .setIdRequirement(parameters.hasIdRequirement() ? 123 : null)
+                        .setKeyBytes(
+                                SecretBytes.copyFrom(truncatedKeyMaterial, InsecureSecretKeyAccess.get()))
+                        .build();
         assertTrue(key.equalsKey(expectedKey));
     }
 
@@ -181,19 +173,19 @@ class Sm4GcmKeyManagerTest {
     @Test
     void getPrimitiveFromKeysetHandle() throws Exception {
         Sm4GcmParameters parameters =
-            Sm4GcmParameters.builder()
-                .setIvSizeBytes(12)
-                .setTagSizeBytes(16)
-                .setVariant(Sm4GcmParameters.Variant.TINK)
-                .build();
+                Sm4GcmParameters.builder()
+                        .setIvSizeBytes(12)
+                        .setTagSizeBytes(16)
+                        .setVariant(Sm4GcmParameters.Variant.TINK)
+                        .build();
         Sm4GcmKey key =
-            Sm4GcmKey.builder()
-                .setParameters(parameters)
-                .setKeyBytes(SecretBytes.randomBytes(16))
-                .setIdRequirement(31)
-                .build();
+                Sm4GcmKey.builder()
+                        .setParameters(parameters)
+                        .setKeyBytes(SecretBytes.randomBytes(16))
+                        .setIdRequirement(31)
+                        .build();
         KeysetHandle keysetHandle =
-            KeysetHandle.newBuilder().addEntry(KeysetHandle.importKey(key).makePrimary()).build();
+                KeysetHandle.newBuilder().addEntry(KeysetHandle.importKey(key).makePrimary()).build();
         byte[] plaintext = "plaintext".getBytes(UTF_8);
         byte[] aad = "aad".getBytes(UTF_8);
 
@@ -214,13 +206,13 @@ class Sm4GcmKeyManagerTest {
         String name;
 
         public TestVector(
-            String name,
-            String keyValue,
-            String plaintext,
-            String aad,
-            String iv,
-            String ciphertext,
-            String tag) {
+                String name,
+                String keyValue,
+                String plaintext,
+                String aad,
+                String iv,
+                String ciphertext,
+                String tag) {
             try {
                 this.name = name;
                 this.keyValue = Hex.decode(keyValue);

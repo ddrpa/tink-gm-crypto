@@ -1,33 +1,15 @@
 package cc.ddrpa.crypto.tink.hybrid;
 
-import static com.google.common.truth.Truth.assertThat;
-import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 import cc.ddrpa.crypto.tink.hybrid.internal.Sm2EncryptionHybridDecrypt;
 import cc.ddrpa.crypto.tink.hybrid.internal.Sm2EncryptionHybridEncrypt;
 import cc.ddrpa.crypto.tink.sm2.internal.Sm2Curve;
 import cc.ddrpa.crypto.tink.sm2.internal.Sm2KeyUtil;
-import com.google.crypto.tink.CleartextKeysetHandle;
-import com.google.crypto.tink.HybridDecrypt;
-import com.google.crypto.tink.HybridEncrypt;
-import com.google.crypto.tink.InsecureSecretKeyAccess;
-import com.google.crypto.tink.JsonKeysetReader;
-import com.google.crypto.tink.JsonKeysetWriter;
-import com.google.crypto.tink.KeysetHandle;
-import com.google.crypto.tink.RegistryConfiguration;
+import com.google.crypto.tink.*;
 import com.google.crypto.tink.hybrid.HybridDecryptWrapper;
 import com.google.crypto.tink.hybrid.HybridEncryptWrapper;
 import com.google.crypto.tink.internal.KeyManagerRegistry;
 import com.google.crypto.tink.util.Bytes;
 import com.google.crypto.tink.util.SecretBytes;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import org.bouncycastle.crypto.digests.SM3Digest;
 import org.bouncycastle.crypto.engines.SM2Engine;
 import org.bouncycastle.crypto.params.ECPrivateKeyParameters;
@@ -35,6 +17,18 @@ import org.bouncycastle.crypto.params.ECPublicKeyParameters;
 import org.bouncycastle.crypto.params.ParametersWithRandom;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
+
+import static com.google.common.truth.Truth.assertThat;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Test for Sm2EncryptionKeyManager and Sm2EncryptionPublicKeyManager.
@@ -45,15 +39,6 @@ class Sm2EncryptionKeyManagerTest {
     // C1 (65 bytes, 0x04 || X || Y) + C3 (32 bytes SM3 digest) + C2 (plaintext length bytes).
     private static final int C1_SIZE = Sm2Curve.UNCOMPRESSED_POINT_SIZE;
     private static final int C3_SIZE = 32;
-
-    @BeforeEach
-    void register() throws Exception {
-        // Registers the HybridEncrypt / HybridDecrypt wrappers (used by KeysetHandle to obtain
-        // primitives from keysets), without pulling in the whole HybridConfig.
-        HybridEncryptWrapper.register();
-        HybridDecryptWrapper.register();
-        Sm2EncryptionKeyManager.registerPair(true);
-    }
 
     private static byte[] concat(byte[] a, byte[] b) {
         byte[] result = new byte[a.length + b.length];
@@ -67,12 +52,12 @@ class Sm2EncryptionKeyManagerTest {
     }
 
     private static HybridDecrypt getDecrypt(KeysetHandle privateHandle)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         return privateHandle.getPrimitive(RegistryConfiguration.get(), HybridDecrypt.class);
     }
 
     private static HybridEncrypt getEncrypt(KeysetHandle publicHandle)
-        throws GeneralSecurityException {
+            throws GeneralSecurityException {
         return publicHandle.getPrimitive(RegistryConfiguration.get(), HybridEncrypt.class);
     }
 
@@ -81,25 +66,34 @@ class Sm2EncryptionKeyManagerTest {
      * ciphertext failures (wrong prefix, wrong length, malformed C1, C3 mismatch, ...).
      */
     private static void assertDecryptionFailsWithGenericMessage(
-        HybridDecrypt decrypt, byte[] ciphertext, byte[] contextInfo) {
+            HybridDecrypt decrypt, byte[] ciphertext, byte[] contextInfo) {
         GeneralSecurityException e = assertThrows(GeneralSecurityException.class,
-            () -> decrypt.decrypt(ciphertext, contextInfo));
+                () -> decrypt.decrypt(ciphertext, contextInfo));
         assertThat(e.getMessage()).isEqualTo("Decryption failed");
+    }
+
+    @BeforeEach
+    void register() throws Exception {
+        // Registers the HybridEncrypt / HybridDecrypt wrappers (used by KeysetHandle to obtain
+        // primitives from keysets), without pulling in the whole HybridConfig.
+        HybridEncryptWrapper.register();
+        HybridDecryptWrapper.register();
+        Sm2EncryptionKeyManager.registerPair(true);
     }
 
     @Test
     void testKeyManagersRegistered() throws Exception {
         assertThat(KeyManagerRegistry.globalInstance()
-            .getKeyManager(Sm2EncryptionKeyManager.getKeyType(), HybridDecrypt.class)).isNotNull();
+                .getKeyManager(Sm2EncryptionKeyManager.getKeyType(), HybridDecrypt.class)).isNotNull();
         assertThat(KeyManagerRegistry.globalInstance()
-            .getKeyManager(Sm2EncryptionPublicKeyManager.getKeyType(), HybridEncrypt.class))
-            .isNotNull();
+                .getKeyManager(Sm2EncryptionPublicKeyManager.getKeyType(), HybridEncrypt.class))
+                .isNotNull();
     }
 
     @Test
     void encryptDecryptRoundTripThroughKeysetHandle() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
         HybridDecrypt decrypt = getDecrypt(privateHandle);
         KeysetHandle publicHandle = privateHandle.getPublicKeysetHandle();
         HybridEncrypt encrypt = getEncrypt(publicHandle);
@@ -121,13 +115,13 @@ class Sm2EncryptionKeyManagerTest {
     @Test
     void nonEmptyContextInfoIsRejected() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
         KeysetHandle publicHandle = privateHandle.getPublicKeysetHandle();
         HybridDecrypt decrypt = getDecrypt(privateHandle);
         HybridEncrypt encrypt = getEncrypt(publicHandle);
         Sm2EncryptionPublicKey publicKey = (Sm2EncryptionPublicKey) publicHandle.getAt(0).getKey();
         Sm2EncryptionPrivateKey privateKey =
-            (Sm2EncryptionPrivateKey) privateHandle.getAt(0).getKey();
+                (Sm2EncryptionPrivateKey) privateHandle.getAt(0).getKey();
         HybridEncrypt directEncrypt = Sm2EncryptionHybridEncrypt.create(publicKey);
         HybridDecrypt directDecrypt = Sm2EncryptionHybridDecrypt.create(privateKey);
 
@@ -136,29 +130,29 @@ class Sm2EncryptionKeyManagerTest {
 
         // Through the keyset wrapper the descriptive encrypt error propagates...
         GeneralSecurityException encryptException = assertThrows(
-            GeneralSecurityException.class, () -> encrypt.encrypt(plaintext, contextInfo));
+                GeneralSecurityException.class, () -> encrypt.encrypt(plaintext, contextInfo));
         assertThat(encryptException.getMessage())
-            .contains("contextInfo must be empty");
+                .contains("contextInfo must be empty");
         // ... and decrypt must also refuse non-empty contextInfo (through the wrapper only a
         // generic error is observable, since the wrapper retries other keys).
         byte[] validCiphertext = encrypt.encrypt(plaintext, null);
         assertThrows(GeneralSecurityException.class,
-            () -> decrypt.decrypt(validCiphertext, contextInfo));
+                () -> decrypt.decrypt(validCiphertext, contextInfo));
         // On the direct primitive the descriptive message is observable on both sides.
         GeneralSecurityException directEncryptException = assertThrows(
-            GeneralSecurityException.class, () -> directEncrypt.encrypt(plaintext, contextInfo));
+                GeneralSecurityException.class, () -> directEncrypt.encrypt(plaintext, contextInfo));
         assertThat(directEncryptException.getMessage()).contains("contextInfo must be empty");
         GeneralSecurityException directDecryptException = assertThrows(
-            GeneralSecurityException.class,
-            () -> directDecrypt.decrypt(new byte[C1_SIZE + C3_SIZE + 1], contextInfo));
+                GeneralSecurityException.class,
+                () -> directDecrypt.decrypt(new byte[C1_SIZE + C3_SIZE + 1], contextInfo));
         assertThat(directDecryptException.getMessage()).contains("contextInfo must be empty");
     }
 
     @Test
     void rawCiphertextsHaveStandardLayout() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(
-                Sm2EncryptionKeyManager.rawSm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(
+                        Sm2EncryptionKeyManager.rawSm2EncryptionTemplate().toParameters());
         HybridDecrypt decrypt = getDecrypt(privateHandle);
         KeysetHandle publicHandle = privateHandle.getPublicKeysetHandle();
         HybridEncrypt encrypt = getEncrypt(publicHandle);
@@ -180,10 +174,10 @@ class Sm2EncryptionKeyManagerTest {
     @Test
     void tinkCiphertextsArePrefixedWithKeyId() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
         int id = privateHandle.getAt(0).getId();
         Sm2EncryptionPrivateKey privateKey =
-            (Sm2EncryptionPrivateKey) privateHandle.getAt(0).getKey();
+                (Sm2EncryptionPrivateKey) privateHandle.getAt(0).getKey();
         assertThat(privateKey.getIdRequirementOrNull()).isEqualTo(id);
 
         HybridDecrypt decrypt = getDecrypt(privateHandle);
@@ -196,17 +190,17 @@ class Sm2EncryptionKeyManagerTest {
         assertThat(ciphertext.length).isEqualTo(5 + C1_SIZE + C3_SIZE + plaintext.length);
         assertThat(ciphertext[0]).isEqualTo((byte) 1);
         assertThat(Arrays.copyOf(ciphertext, 5))
-            .isEqualTo(privateKey.getOutputPrefix().toByteArray());
+                .isEqualTo(privateKey.getOutputPrefix().toByteArray());
         assertThat(ciphertext).isEqualTo(concat(privateKey.getOutputPrefix().toByteArray(),
-            Arrays.copyOfRange(ciphertext, 5, ciphertext.length)));
+                Arrays.copyOfRange(ciphertext, 5, ciphertext.length)));
         assertThat(decrypt.decrypt(ciphertext, null)).isEqualTo(plaintext);
     }
 
     @Test
     void encryptOutputLayoutSpotCheck() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(
-                Sm2EncryptionKeyManager.rawSm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(
+                        Sm2EncryptionKeyManager.rawSm2EncryptionTemplate().toParameters());
         HybridEncrypt encrypt = getEncrypt(privateHandle.getPublicKeysetHandle());
 
         byte[] plaintext = new byte[64];
@@ -225,45 +219,45 @@ class Sm2EncryptionKeyManagerTest {
     @Test
     void emptyPlaintextEncryptionFails() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
         KeysetHandle rawPrivateHandle =
-            KeysetHandle.generateNew(
-                Sm2EncryptionKeyManager.rawSm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(
+                        Sm2EncryptionKeyManager.rawSm2EncryptionTemplate().toParameters());
         HybridEncrypt tinkEncrypt = getEncrypt(privateHandle.getPublicKeysetHandle());
         HybridEncrypt rawEncrypt = getEncrypt(rawPrivateHandle.getPublicKeysetHandle());
         Sm2EncryptionPublicKey publicKey =
-            (Sm2EncryptionPublicKey) privateHandle.getPublicKeysetHandle().getAt(0).getKey();
+                (Sm2EncryptionPublicKey) privateHandle.getPublicKeysetHandle().getAt(0).getKey();
         HybridEncrypt directEncrypt = Sm2EncryptionHybridEncrypt.create(publicKey);
 
         assertThrows(GeneralSecurityException.class,
-            () -> tinkEncrypt.encrypt(new byte[]{}, null));
+                () -> tinkEncrypt.encrypt(new byte[]{}, null));
         assertThrows(GeneralSecurityException.class,
-            () -> rawEncrypt.encrypt(new byte[]{}, null));
+                () -> rawEncrypt.encrypt(new byte[]{}, null));
         assertThrows(GeneralSecurityException.class,
-            () -> directEncrypt.encrypt(new byte[]{}, null));
+                () -> directEncrypt.encrypt(new byte[]{}, null));
     }
 
     @Test
     void twoKeyKeysetWorks() throws Exception {
         KeysetHandle keyAHandle =
-            KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
         KeysetHandle keyBHandle =
-            KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
         // Extremely unlikely, but make sure the two keys have different ids (hence different
         // prefixes).
         while (keyBHandle.getAt(0).getId() == keyAHandle.getAt(0).getId()) {
             keyBHandle =
-                KeysetHandle.generateNew(
-                    Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
+                    KeysetHandle.generateNew(
+                            Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
         }
         Sm2EncryptionPrivateKey keyA = (Sm2EncryptionPrivateKey) keyAHandle.getAt(0).getKey();
         Sm2EncryptionPrivateKey keyB = (Sm2EncryptionPrivateKey) keyBHandle.getAt(0).getKey();
 
         KeysetHandle twoKeyHandle =
-            KeysetHandle.newBuilder()
-                .addEntry(KeysetHandle.importKey(keyA).makePrimary())
-                .addEntry(KeysetHandle.importKey(keyB))
-                .build();
+                KeysetHandle.newBuilder()
+                        .addEntry(KeysetHandle.importKey(keyA).makePrimary())
+                        .addEntry(KeysetHandle.importKey(keyB))
+                        .build();
         assertThat(twoKeyHandle.size()).isEqualTo(2);
 
         HybridDecrypt twoKeyDecrypt = getDecrypt(twoKeyHandle);
@@ -282,24 +276,24 @@ class Sm2EncryptionKeyManagerTest {
         // contains key A.
         HybridDecrypt keyADecrypt = getDecrypt(keyAHandle);
         assertThrows(GeneralSecurityException.class,
-            () -> keyADecrypt.decrypt(keyBCiphertext, null));
+                () -> keyADecrypt.decrypt(keyBCiphertext, null));
         // A ciphertext from a foreign key (not in the keyset) does not decrypt either.
         KeysetHandle foreignHandle =
-            KeysetHandle.generateNew(
-                Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(
+                        Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
         HybridEncrypt foreignEncrypt = getEncrypt(foreignHandle.getPublicKeysetHandle());
         byte[] foreignCiphertext = foreignEncrypt.encrypt(data, null);
         assertThrows(GeneralSecurityException.class,
-            () -> twoKeyDecrypt.decrypt(foreignCiphertext, null));
+                () -> twoKeyDecrypt.decrypt(foreignCiphertext, null));
     }
 
     @Test
     void rawCiphertextInteroperatesWithBouncyCastle() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(
-                Sm2EncryptionKeyManager.rawSm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(
+                        Sm2EncryptionKeyManager.rawSm2EncryptionTemplate().toParameters());
         Sm2EncryptionPrivateKey privateKey =
-            (Sm2EncryptionPrivateKey) privateHandle.getAt(0).getKey();
+                (Sm2EncryptionPrivateKey) privateHandle.getAt(0).getKey();
         byte[] d = privateKey.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get());
         byte[] q = privateKey.getPublicKey().getPublicKey().toByteArray();
         assertThat(d.length).isEqualTo(32);
@@ -314,7 +308,7 @@ class Sm2EncryptionKeyManagerTest {
         ECPublicKeyParameters bcPublicParams = Sm2KeyUtil.toPublicKeyParameters(q);
         SM2Engine bcEncryptEngine = new SM2Engine(new SM3Digest(), SM2Engine.Mode.C1C3C2);
         bcEncryptEngine.init(
-            true, new ParametersWithRandom(bcPublicParams, Sm2KeyUtil.getSecureRandom()));
+                true, new ParametersWithRandom(bcPublicParams, Sm2KeyUtil.getSecureRandom()));
         byte[] bcCiphertext = bcEncryptEngine.processBlock(message, 0, message.length);
         assertThat(decrypt.decrypt(bcCiphertext, null)).isEqualTo(message);
 
@@ -326,25 +320,25 @@ class Sm2EncryptionKeyManagerTest {
         SM2Engine bcDecryptEngine = new SM2Engine(new SM3Digest(), SM2Engine.Mode.C1C3C2);
         bcDecryptEngine.init(false, bcPrivateParams);
         byte[] bcPlaintext =
-            bcDecryptEngine.processBlock(ourCiphertext, 0, ourCiphertext.length);
+                bcDecryptEngine.processBlock(ourCiphertext, 0, ourCiphertext.length);
         assertThat(bcPlaintext).isEqualTo(message);
     }
 
     @Test
     void tamperedCiphertextsFailUniformly() throws Exception {
         KeysetHandle rawPrivateHandle =
-            KeysetHandle.generateNew(
-                Sm2EncryptionKeyManager.rawSm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(
+                        Sm2EncryptionKeyManager.rawSm2EncryptionTemplate().toParameters());
         Sm2EncryptionPrivateKey rawPrivateKey =
-            (Sm2EncryptionPrivateKey) rawPrivateHandle.getAt(0).getKey();
+                (Sm2EncryptionPrivateKey) rawPrivateHandle.getAt(0).getKey();
         HybridEncrypt rawEncrypt = getEncrypt(rawPrivateHandle.getPublicKeysetHandle());
         HybridDecrypt rawDecrypt = getDecrypt(rawPrivateHandle);
         HybridDecrypt rawDirectDecrypt = Sm2EncryptionHybridDecrypt.create(rawPrivateKey);
 
         KeysetHandle tinkPrivateHandle =
-            KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
         Sm2EncryptionPrivateKey tinkPrivateKey =
-            (Sm2EncryptionPrivateKey) tinkPrivateHandle.getAt(0).getKey();
+                (Sm2EncryptionPrivateKey) tinkPrivateHandle.getAt(0).getKey();
         HybridEncrypt tinkEncrypt = getEncrypt(tinkPrivateHandle.getPublicKeysetHandle());
         HybridDecrypt tinkDirectDecrypt = Sm2EncryptionHybridDecrypt.create(tinkPrivateKey);
 
@@ -361,8 +355,8 @@ class Sm2EncryptionKeyManagerTest {
         assertDecryptionFailsWithGenericMessage(rawDirectDecrypt, flippedC2, null);
         // Truncate the ciphertext.
         assertDecryptionFailsWithGenericMessage(
-            rawDirectDecrypt,
-            Arrays.copyOf(rawCiphertext, rawCiphertext.length - 1), null);
+                rawDirectDecrypt,
+                Arrays.copyOf(rawCiphertext, rawCiphertext.length - 1), null);
         assertDecryptionFailsWithGenericMessage(rawDirectDecrypt, new byte[10], null);
         // Replace the 0x04 prefix of C1.
         byte[] badPrefix = Arrays.copyOf(rawCiphertext, rawCiphertext.length);
@@ -376,7 +370,7 @@ class Sm2EncryptionKeyManagerTest {
         // The same tampered values also fail through the keyset wrapper (which only surfaces a
         // generic error).
         assertThrows(GeneralSecurityException.class,
-            () -> rawDecrypt.decrypt(flippedC2, null));
+                () -> rawDecrypt.decrypt(flippedC2, null));
 
         // --- Tampering with a TINK ciphertext. ---
         byte[] tinkCiphertext = tinkEncrypt.encrypt(plaintext, null);
@@ -395,32 +389,32 @@ class Sm2EncryptionKeyManagerTest {
         // stripping the prefix. ---
         byte[] tinkPublicKeyBytes = tinkPrivateKey.getPublicKey().getPublicKey().toByteArray();
         byte[] tinkPrivateValue =
-            tinkPrivateKey.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get());
+                tinkPrivateKey.getPrivateValue().toByteArray(InsecureSecretKeyAccess.get());
         Sm2EncryptionPublicKey sameKeyRawPublicKey =
-            Sm2EncryptionPublicKey.builder()
-                .setParameters(
-                    Sm2EncryptionParameters.builder()
-                        .setVariant(Sm2EncryptionParameters.Variant.NO_PREFIX)
-                        .build())
-                .setPublicKey(Bytes.copyFrom(tinkPublicKeyBytes))
-                .build();
+                Sm2EncryptionPublicKey.builder()
+                        .setParameters(
+                                Sm2EncryptionParameters.builder()
+                                        .setVariant(Sm2EncryptionParameters.Variant.NO_PREFIX)
+                                        .build())
+                        .setPublicKey(Bytes.copyFrom(tinkPublicKeyBytes))
+                        .build();
         Sm2EncryptionPrivateKey sameKeyRawPrivateKey =
-            Sm2EncryptionPrivateKey.builder()
-                .setPublicKey(sameKeyRawPublicKey)
-                .setPrivateValue(secretBytes(tinkPrivateValue))
-                .build();
+                Sm2EncryptionPrivateKey.builder()
+                        .setPublicKey(sameKeyRawPublicKey)
+                        .setPrivateValue(secretBytes(tinkPrivateValue))
+                        .build();
         HybridDecrypt sameKeyRawDecrypt =
-            Sm2EncryptionHybridDecrypt.create(sameKeyRawPrivateKey);
+                Sm2EncryptionHybridDecrypt.create(sameKeyRawPrivateKey);
         byte[] strippedValidBody =
-            Arrays.copyOfRange(tinkCiphertext, 5, tinkCiphertext.length);
+                Arrays.copyOfRange(tinkCiphertext, 5, tinkCiphertext.length);
         assertThat(sameKeyRawDecrypt.decrypt(strippedValidBody, null)).isEqualTo(plaintext);
         // Tampered bodies must also fail when re-interpreted as raw ciphertexts after stripping
         // the TINK prefix (flipped C2 byte; corrupted C1 0x04 prefix).
         byte[] strippedTamperedBody =
-            Arrays.copyOfRange(tinkFlippedC2, 5, tinkFlippedC2.length);
+                Arrays.copyOfRange(tinkFlippedC2, 5, tinkFlippedC2.length);
         assertDecryptionFailsWithGenericMessage(sameKeyRawDecrypt, strippedTamperedBody, null);
         byte[] strippedBadC1Prefix =
-            Arrays.copyOfRange(tinkBadC1Prefix, 5, tinkBadC1Prefix.length);
+                Arrays.copyOfRange(tinkBadC1Prefix, 5, tinkBadC1Prefix.length);
         assertDecryptionFailsWithGenericMessage(sameKeyRawDecrypt, strippedBadC1Prefix, null);
 
         // --- Ciphertexts never leak partial plaintext: decrypting with a plaintext prefix match
@@ -429,13 +423,13 @@ class Sm2EncryptionKeyManagerTest {
         HybridDecrypt rawOnlyDecrypt = getDecrypt(rawPrivateHandle);
         // The raw-only handle only accepts ciphertexts without a prefix.
         assertThrows(GeneralSecurityException.class,
-            () -> rawOnlyDecrypt.decrypt(wrongKeyCiphertext, null));
+                () -> rawOnlyDecrypt.decrypt(wrongKeyCiphertext, null));
     }
 
     @Test
     void jsonKeysetRoundTripWorks() throws Exception {
         KeysetHandle privateHandle =
-            KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
+                KeysetHandle.generateNew(Sm2EncryptionKeyManager.sm2EncryptionTemplate().toParameters());
         HybridDecrypt originalDecrypt = getDecrypt(privateHandle);
         KeysetHandle publicHandle = privateHandle.getPublicKeysetHandle();
         HybridEncrypt originalEncrypt = getEncrypt(publicHandle);
@@ -455,10 +449,10 @@ class Sm2EncryptionKeyManagerTest {
             KeysetHandle parsedPrivateHandle;
             try (InputStream in = Files.newInputStream(privateFile)) {
                 parsedPrivateHandle =
-                    CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(in));
+                        CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(in));
             }
             assertTrue(parsedPrivateHandle.getAt(0).getKey().equalsKey(
-                privateHandle.getAt(0).getKey()));
+                    privateHandle.getAt(0).getKey()));
             HybridDecrypt parsedDecrypt = getDecrypt(parsedPrivateHandle);
             HybridEncrypt parsedEncrypt = getEncrypt(parsedPrivateHandle.getPublicKeysetHandle());
             byte[] parsedCiphertext = parsedEncrypt.encrypt(message, null);
@@ -474,7 +468,7 @@ class Sm2EncryptionKeyManagerTest {
             KeysetHandle parsedPublicHandle;
             try (InputStream in = Files.newInputStream(publicFile)) {
                 parsedPublicHandle =
-                    CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(in));
+                        CleartextKeysetHandle.read(JsonKeysetReader.withInputStream(in));
             }
             HybridEncrypt publicEncrypt = getEncrypt(parsedPublicHandle);
             byte[] publicEncrypted = publicEncrypt.encrypt(message, null);

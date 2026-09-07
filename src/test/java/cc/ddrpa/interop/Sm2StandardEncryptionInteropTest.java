@@ -1,9 +1,5 @@
 package cc.ddrpa.interop;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-
 import cc.ddrpa.crypto.tink.hybrid.Sm2EncryptionKeyManager;
 import cc.ddrpa.interop.bc.Sm2StandardEncryption;
 import cc.ddrpa.interop.testing.InteropFixtures;
@@ -12,10 +8,13 @@ import com.google.crypto.tink.HybridDecrypt;
 import com.google.crypto.tink.HybridEncrypt;
 import com.google.crypto.tink.hybrid.HybridDecryptWrapper;
 import com.google.crypto.tink.hybrid.HybridEncryptWrapper;
-import java.security.GeneralSecurityException;
-import java.util.Arrays;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+
+import java.security.GeneralSecurityException;
+import java.util.Arrays;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * 标准 SM2 加密（GB/T 32918.4，C1C3C2）的跨系统互操作自检：Tink 侧 ⇄ 对方侧（纯 BouncyCastle，
@@ -65,8 +64,8 @@ class Sm2StandardEncryptionInteropTest {
         HybridEncrypt encryptor = InteropTink.newRawSm2StandardEncryptor();
         byte[] context = "不应支持".getBytes();
         GeneralSecurityException e =
-            assertThrows(GeneralSecurityException.class, () -> encryptor.encrypt(PLAINTEXT, context));
-        assertEquals(true, e.getMessage() != null); // 报错即视为通过
+                assertThrows(GeneralSecurityException.class, () -> encryptor.encrypt(PLAINTEXT, context));
+        assertTrue(e.getMessage() != null); // 报错即视为通过
     }
 
     @Test
@@ -74,8 +73,8 @@ class Sm2StandardEncryptionInteropTest {
         HybridEncrypt encryptor = InteropTink.newRawSm2StandardEncryptor();
         assertThrows(GeneralSecurityException.class, () -> encryptor.encrypt(new byte[0], null));
         assertThrows(
-            GeneralSecurityException.class,
-            () -> Sm2StandardEncryption.encrypt(Q, new byte[0]));
+                GeneralSecurityException.class,
+                () -> Sm2StandardEncryption.encrypt(Q, new byte[0]));
     }
 
     @Test
@@ -90,7 +89,7 @@ class Sm2StandardEncryptionInteropTest {
         byte[] flippedC2 = Arrays.copyOf(ciphertext, ciphertext.length);
         flippedC2[flippedC2.length - 1] ^= 1;
         assertThrows(GeneralSecurityException.class,
-            () -> Sm2StandardEncryption.decrypt(D, flippedC2));
+                () -> Sm2StandardEncryption.decrypt(D, flippedC2));
         byte[] badC1 = Arrays.copyOf(ciphertext, ciphertext.length);
         badC1[0] = 0x05;
         assertThrows(GeneralSecurityException.class, () -> Sm2StandardEncryption.decrypt(D, badC1));
@@ -111,9 +110,9 @@ class Sm2StandardEncryptionInteropTest {
 
         assertEquals(0x01, ciphertext[0] & 0xff);
         int keyId = ((ciphertext[1] & 0xff) << 24)
-            | ((ciphertext[2] & 0xff) << 16)
-            | ((ciphertext[3] & 0xff) << 8)
-            | (ciphertext[4] & 0xff);
+                | ((ciphertext[2] & 0xff) << 16)
+                | ((ciphertext[3] & 0xff) << 8)
+                | (ciphertext[4] & 0xff);
         assertEquals(FIXED_KEY_ID, keyId);
 
         byte[] body = Arrays.copyOfRange(ciphertext, 5, ciphertext.length);

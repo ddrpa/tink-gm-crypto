@@ -3,9 +3,10 @@ package cc.ddrpa.crypto.tink.streamingaead;
 import com.google.crypto.tink.streamingaead.StreamingAeadParameters;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.google.errorprone.annotations.Immutable;
+
+import javax.annotation.Nullable;
 import java.security.GeneralSecurityException;
 import java.util.Objects;
-import javax.annotation.Nullable;
 
 /**
  * Represents the parameters of a {@link Sm4GcmHkdfStreamingKey}.
@@ -21,10 +22,10 @@ public class Sm4GcmHkdfStreamingParameters extends StreamingAeadParameters {
     private final Integer ciphertextSegmentSizeBytes;
 
     private Sm4GcmHkdfStreamingParameters(
-        Integer keySizeBytes,
-        Integer derivedSm4GcmKeySizeBytes,
-        HashType hkdfHashType,
-        Integer ciphertextSegmentSizeBytes) {
+            Integer keySizeBytes,
+            Integer derivedSm4GcmKeySizeBytes,
+            HashType hkdfHashType,
+            Integer ciphertextSegmentSizeBytes) {
         this.keySizeBytes = keySizeBytes;
         this.derivedSm4GcmKeySizeBytes = derivedSm4GcmKeySizeBytes;
         this.hkdfHashType = hkdfHashType;
@@ -70,32 +71,32 @@ public class Sm4GcmHkdfStreamingParameters extends StreamingAeadParameters {
         }
         Sm4GcmHkdfStreamingParameters that = (Sm4GcmHkdfStreamingParameters) o;
         return that.getKeySizeBytes() == getKeySizeBytes()
-            && that.getDerivedSm4GcmKeySizeBytes() == getDerivedSm4GcmKeySizeBytes()
-            && that.getHkdfHashType() == getHkdfHashType()
-            && that.getCiphertextSegmentSizeBytes() == getCiphertextSegmentSizeBytes();
+                && that.getDerivedSm4GcmKeySizeBytes() == getDerivedSm4GcmKeySizeBytes()
+                && that.getHkdfHashType() == getHkdfHashType()
+                && that.getCiphertextSegmentSizeBytes() == getCiphertextSegmentSizeBytes();
     }
 
     @Override
     public int hashCode() {
         return Objects.hash(
-            Sm4GcmHkdfStreamingParameters.class,
-            keySizeBytes,
-            derivedSm4GcmKeySizeBytes,
-            hkdfHashType,
-            ciphertextSegmentSizeBytes);
+                Sm4GcmHkdfStreamingParameters.class,
+                keySizeBytes,
+                derivedSm4GcmKeySizeBytes,
+                hkdfHashType,
+                ciphertextSegmentSizeBytes);
     }
 
     @Override
     public String toString() {
         return "Sm4GcmHkdfStreaming Parameters (IKM size: "
-            + keySizeBytes
-            + ", "
-            + derivedSm4GcmKeySizeBytes
-            + "-byte SM4 GCM key, "
-            + hkdfHashType
-            + " for HKDF "
-            + ciphertextSegmentSizeBytes
-            + "-byte ciphertexts)";
+                + keySizeBytes
+                + ", "
+                + derivedSm4GcmKeySizeBytes
+                + "-byte SM4 GCM key, "
+                + hkdfHashType
+                + " for HKDF "
+                + ciphertextSegmentSizeBytes
+                + "-byte ciphertexts)";
     }
 
     /**
@@ -200,21 +201,21 @@ public class Sm4GcmHkdfStreamingParameters extends StreamingAeadParameters {
 
             if (derivedSm4GcmKeySizeBytes != 16) {
                 throw new GeneralSecurityException(
-                    "derivedSm4GcmKeySizeBytes needs to be 16, not "
-                        + derivedSm4GcmKeySizeBytes);
+                        "derivedSm4GcmKeySizeBytes needs to be 16, not "
+                                + derivedSm4GcmKeySizeBytes);
             }
             if (keySizeBytes < derivedSm4GcmKeySizeBytes) {
                 throw new GeneralSecurityException(
-                    "keySizeBytes needs to be at least derivedSm4GcmKeySizeBytes, i.e., "
-                        + derivedSm4GcmKeySizeBytes);
+                        "keySizeBytes needs to be at least derivedSm4GcmKeySizeBytes, i.e., "
+                                + derivedSm4GcmKeySizeBytes);
             }
             if (ciphertextSegmentSizeBytes <= derivedSm4GcmKeySizeBytes + 24) {
                 throw new GeneralSecurityException(
-                    "ciphertextSegmentSizeBytes needs to be at least derivedSm4GcmKeySizeBytes + 25, i.e., "
-                        + (derivedSm4GcmKeySizeBytes + 25));
+                        "ciphertextSegmentSizeBytes needs to be at least derivedSm4GcmKeySizeBytes + 25, i.e., "
+                                + (derivedSm4GcmKeySizeBytes + 25));
             }
             return new Sm4GcmHkdfStreamingParameters(
-                keySizeBytes, derivedSm4GcmKeySizeBytes, hkdfHashType, ciphertextSegmentSizeBytes);
+                    keySizeBytes, derivedSm4GcmKeySizeBytes, hkdfHashType, ciphertextSegmentSizeBytes);
         }
     }
 }

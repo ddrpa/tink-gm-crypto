@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 //
-////////////////////////////////////////////////////////////////////////////////
+/// /////////////////////////////////////////////////////////////////////////////
 
 package com.google.crypto.tink.internal.testing;
 
@@ -24,28 +24,27 @@ import com.google.crypto.tink.ProtoParametersSerialization;
  * ProtoParametersSerialization} for testing.
  */
 public class ParametersWithSerialization {
-  /** Constructs a new ParametersWithSerialization. */
-  public ParametersWithSerialization(
-      Parameters parameters, ProtoParametersSerialization serializedParameters) {
-    this.parameters = parameters;
-    this.serializedParameters = serializedParameters;
-  }
+    private final Parameters parameters;
+    private final ProtoParametersSerialization serializedParameters;
+    /** Constructs a new ParametersWithSerialization. */
+    public ParametersWithSerialization(
+            Parameters parameters, ProtoParametersSerialization serializedParameters) {
+        this.parameters = parameters;
+        this.serializedParameters = serializedParameters;
+    }
 
-  private final Parameters parameters;
-  private final ProtoParametersSerialization serializedParameters;
+    /** Returns the {@link Parameters}. */
+    public Parameters getParameters() {
+        return parameters;
+    }
 
-  /** Returns the {@link Parameters}. */
-  public Parameters getParameters() {
-    return parameters;
-  }
+    /** Returns the {@link ProtoParametersSerialization}. */
+    public ProtoParametersSerialization getSerializedParameters() {
+        return serializedParameters;
+    }
 
-  /** Returns the {@link ProtoParametersSerialization}. */
-  public ProtoParametersSerialization getSerializedParameters() {
-    return serializedParameters;
-  }
-
-  @Override
-  public String toString() {
-    return parameters.toString() + ", " + serializedParameters.toString();
-  }
+    @Override
+    public String toString() {
+        return parameters.toString() + ", " + serializedParameters.toString();
+    }
 }
