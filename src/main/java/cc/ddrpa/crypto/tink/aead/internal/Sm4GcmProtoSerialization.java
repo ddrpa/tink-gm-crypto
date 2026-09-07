@@ -1,23 +1,19 @@
 package cc.ddrpa.crypto.tink.aead.internal;
 
-import static com.google.crypto.tink.internal.Util.toBytesFromPrintableAscii;
-
 import cc.ddrpa.crypto.tink.aead.Sm4GcmKey;
 import cc.ddrpa.crypto.tink.aead.Sm4GcmParameters;
 import com.google.crypto.tink.AccessesPartialKey;
+import com.google.crypto.tink.ProtoKeySerialization;
+import com.google.crypto.tink.ProtoKeySerialization.KeyMaterialType;
+import com.google.crypto.tink.ProtoKeySerialization.OutputPrefixType;
+import com.google.crypto.tink.ProtoParametersSerialization;
 import com.google.crypto.tink.SecretKeyAccess;
 import com.google.crypto.tink.internal.KeyParser;
 import com.google.crypto.tink.internal.KeySerializer;
 import com.google.crypto.tink.internal.MutableSerializationRegistry;
 import com.google.crypto.tink.internal.ParametersParser;
 import com.google.crypto.tink.internal.ParametersSerializer;
-import com.google.crypto.tink.internal.ProtoKeySerialization;
-import com.google.crypto.tink.internal.ProtoParametersSerialization;
 import com.google.crypto.tink.internal.SerializationRegistry;
-import com.google.crypto.tink.proto.KeyData.KeyMaterialType;
-import com.google.crypto.tink.proto.KeyTemplate;
-import com.google.crypto.tink.proto.OutputPrefixType;
-import com.google.crypto.tink.util.Bytes;
 import com.google.crypto.tink.util.SecretBytes;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ExtensionRegistryLite;
@@ -33,24 +29,16 @@ import javax.annotation.Nullable;
 public final class Sm4GcmProtoSerialization {
 
     private static final String TYPE_URL = "type.googleapis.com/ddrpa.crypto.tink.Sm4GcmKey";
-    private static final Bytes TYPE_URL_BYTES = toBytesFromPrintableAscii(TYPE_URL);
-    private static final ParametersParser<ProtoParametersSerialization> PARAMETERS_PARSER =
-        ParametersParser.create(
-            Sm4GcmProtoSerialization::parseParameters,
-            TYPE_URL_BYTES,
-            ProtoParametersSerialization.class);
-    private static final KeyParser<ProtoKeySerialization> KEY_PARSER =
-        KeyParser.create(
-            Sm4GcmProtoSerialization::parseKey, TYPE_URL_BYTES, ProtoKeySerialization.class);
-    private static final ParametersSerializer<Sm4GcmParameters, ProtoParametersSerialization>
-        PARAMETERS_SERIALIZER =
+
+    private static final ParametersSerializer<Sm4GcmParameters> PARAMETERS_SERIALIZER =
         ParametersSerializer.create(
-            Sm4GcmProtoSerialization::serializeParameters,
-            Sm4GcmParameters.class,
-            ProtoParametersSerialization.class);
-    private static final KeySerializer<Sm4GcmKey, ProtoKeySerialization> KEY_SERIALIZER =
-        KeySerializer.create(
-            Sm4GcmProtoSerialization::serializeKey, Sm4GcmKey.class, ProtoKeySerialization.class);
+            Sm4GcmProtoSerialization::serializeParameters, Sm4GcmParameters.class);
+    private static final ParametersParser PARAMETERS_PARSER =
+        ParametersParser.create(Sm4GcmProtoSerialization::parseParameters, TYPE_URL);
+    private static final KeySerializer<Sm4GcmKey> KEY_SERIALIZER =
+        KeySerializer.create(Sm4GcmProtoSerialization::serializeKey, Sm4GcmKey.class);
+    private static final KeyParser KEY_PARSER =
+        KeyParser.create(Sm4GcmProtoSerialization::parseKey, TYPE_URL);
 
     private Sm4GcmProtoSerialization() {
     }
@@ -68,15 +56,13 @@ public final class Sm4GcmProtoSerialization {
 
     private static Sm4GcmParameters.Variant toVariant(OutputPrefixType outputPrefixType)
         throws GeneralSecurityException {
-        switch (outputPrefixType) {
-            case TINK:
-                return Sm4GcmParameters.Variant.TINK;
-            case RAW:
-                return Sm4GcmParameters.Variant.NO_PREFIX;
-            default:
-                throw new GeneralSecurityException(
-                    "Unable to parse OutputPrefixType: " + outputPrefixType.getNumber());
+        if (OutputPrefixType.TINK.equals(outputPrefixType)) {
+            return Sm4GcmParameters.Variant.TINK;
         }
+        if (OutputPrefixType.RAW.equals(outputPrefixType)) {
+            return Sm4GcmParameters.Variant.NO_PREFIX;
+        }
+        throw new GeneralSecurityException("Unable to parse OutputPrefixType: " + outputPrefixType);
     }
 
     private static void validateParameters(Sm4GcmParameters parameters)
@@ -103,14 +89,11 @@ public final class Sm4GcmProtoSerialization {
         throws GeneralSecurityException {
         validateParameters(parameters);
         return ProtoParametersSerialization.create(
-            KeyTemplate.newBuilder()
-                .setTypeUrl(TYPE_URL)
-                .setValue(
-                    cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder()
-                        .build()
-                        .toByteString())
-                .setOutputPrefixType(toProtoOutputPrefixType(parameters.getVariant()))
-                .build());
+            TYPE_URL,
+            toProtoOutputPrefixType(parameters.getVariant()),
+            cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.newBuilder()
+                .build()
+                .toByteString());
     }
 
     private static ProtoKeySerialization serializeKey(Sm4GcmKey key,
@@ -132,16 +115,16 @@ public final class Sm4GcmProtoSerialization {
 
     private static Sm4GcmParameters parseParameters(ProtoParametersSerialization serialization)
         throws GeneralSecurityException {
-        if (!serialization.getKeyTemplate().getTypeUrl().equals(TYPE_URL)) {
+        if (!serialization.getTypeUrl().equals(TYPE_URL)) {
             throw new IllegalArgumentException(
                 "Wrong type URL in call to Sm4GcmProtoSerialization.parseParameters: "
-                    + serialization.getKeyTemplate().getTypeUrl());
+                    + serialization.getTypeUrl());
         }
         cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat format;
         try {
             format =
                 cc.ddrpa.crypto.tink.proto.Sm4GcmKeyFormat.parseFrom(
-                    serialization.getKeyTemplate().getValue(),
+                    serialization.getValue(),
                     ExtensionRegistryLite.getEmptyRegistry());
         } catch (InvalidProtocolBufferException e) {
             throw new GeneralSecurityException("Parsing Sm4GcmParameters failed: ", e);
@@ -157,7 +140,7 @@ public final class Sm4GcmProtoSerialization {
              */
             .setIvSizeBytes(12)
             .setTagSizeBytes(16)
-            .setVariant(toVariant(serialization.getKeyTemplate().getOutputPrefixType()))
+            .setVariant(toVariant(serialization.getOutputPrefixType()))
             .build();
     }
 

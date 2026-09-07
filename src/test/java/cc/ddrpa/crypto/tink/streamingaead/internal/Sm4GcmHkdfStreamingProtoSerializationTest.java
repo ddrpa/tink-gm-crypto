@@ -9,14 +9,15 @@ import cc.ddrpa.crypto.tink.streamingaead.Sm4GcmHkdfStreamingParameters;
 import com.google.crypto.tink.InsecureSecretKeyAccess;
 import com.google.crypto.tink.Key;
 import com.google.crypto.tink.Parameters;
+import com.google.crypto.tink.ProtoKeySerialization;
+import com.google.crypto.tink.ProtoKeySerialization.KeyMaterialType;
+import com.google.crypto.tink.ProtoKeySerialization.OutputPrefixType;
+import com.google.crypto.tink.ProtoParametersSerialization;
 import com.google.crypto.tink.internal.MutableSerializationRegistry;
-import com.google.crypto.tink.internal.ProtoKeySerialization;
-import com.google.crypto.tink.internal.ProtoParametersSerialization;
 import com.google.crypto.tink.proto.HashType;
-import com.google.crypto.tink.proto.KeyData.KeyMaterialType;
-import com.google.crypto.tink.proto.OutputPrefixType;
 import com.google.crypto.tink.util.SecretBytes;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.MessageLite;
 import java.security.GeneralSecurityException;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
@@ -33,10 +34,24 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
 
     private static final String TYPE_URL =
         "type.googleapis.com/ddrpa.crypto.tink.Sm4GcmHkdfStreamingKey";
+
+    /**
+     * Wraps {@link ProtoParametersSerialization#create} which expects the proto value bytes.
+     */
+    private static ProtoParametersSerialization createParametersSerialization(
+        String typeUrl, OutputPrefixType outputPrefixType, MessageLite proto) {
+        try {
+            return ProtoParametersSerialization.create(typeUrl, outputPrefixType,
+                proto.toByteString());
+        } catch (GeneralSecurityException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private static final ProtoParametersSerialization[] INVALID_PARAMETERS_SERIALIZATIONS =
         new ProtoParametersSerialization[]{
             // Key size smaller than derived key size
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.RAW,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -47,7 +62,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                             .setDerivedKeySize(16)
                             .setHkdfHashType(HashType.SHA1))
                     .build()),
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.RAW,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -58,7 +73,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                             .setDerivedKeySize(16)
                             .setHkdfHashType(HashType.SHA1))
                     .build()),
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.RAW,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -71,7 +86,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                             .setHkdfHashType(HashType.SHA1))
                     .build()),
             // Bad hash type
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.RAW,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -196,7 +211,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 .build();
 
         ProtoParametersSerialization serialization =
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.RAW,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -209,7 +224,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                     .build());
 
         ProtoParametersSerialization serialized =
-            registry.serializeParameters(parameters, ProtoParametersSerialization.class);
+            registry.serializeParameters(parameters);
         assertEqualWhenValueParsed(
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.parser(),
             serialized,
@@ -230,7 +245,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 .build();
 
         ProtoParametersSerialization serialization =
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.RAW,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -243,7 +258,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                     .build());
 
         ProtoParametersSerialization serialized =
-            registry.serializeParameters(parameters, ProtoParametersSerialization.class);
+            registry.serializeParameters(parameters);
         assertEqualWhenValueParsed(
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.parser(),
             serialized,
@@ -264,7 +279,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 .build();
 
         ProtoParametersSerialization serialization =
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.RAW,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -277,7 +292,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                     .build());
 
         ProtoParametersSerialization serialized =
-            registry.serializeParameters(parameters, ProtoParametersSerialization.class);
+            registry.serializeParameters(parameters);
         assertEqualWhenValueParsed(
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.parser(),
             serialized,
@@ -298,7 +313,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 .build();
 
         ProtoParametersSerialization serialization =
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.RAW,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -311,7 +326,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                     .build());
 
         ProtoParametersSerialization serialized =
-            registry.serializeParameters(parameters, ProtoParametersSerialization.class);
+            registry.serializeParameters(parameters);
         assertEqualWhenValueParsed(
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.parser(),
             serialized,
@@ -332,7 +347,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 .build();
 
         ProtoParametersSerialization serialization =
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.RAW,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -345,7 +360,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                     .build());
 
         ProtoParametersSerialization serialized =
-            registry.serializeParameters(parameters, ProtoParametersSerialization.class);
+            registry.serializeParameters(parameters);
         assertEqualWhenValueParsed(
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.parser(),
             serialized,
@@ -369,7 +384,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 .build();
 
         ProtoParametersSerialization serialization =
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.TINK,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -399,7 +414,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 .build();
 
         ProtoParametersSerialization serialization =
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.CRUNCHY,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -426,7 +441,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 .build();
 
         ProtoParametersSerialization serialization =
-            ProtoParametersSerialization.create(
+            createParametersSerialization(
                 TYPE_URL,
                 OutputPrefixType.LEGACY,
                 cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
@@ -483,7 +498,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 /* idRequirement= */ null);
 
         ProtoKeySerialization serialized =
-            registry.serializeKey(key, ProtoKeySerialization.class, InsecureSecretKeyAccess.get());
+            registry.serializeKey(key, InsecureSecretKeyAccess.get());
         assertEqualWhenValueParsed(
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKey.parser(), serialized, serialization);
 
@@ -523,7 +538,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 /* idRequirement= */ null);
 
         ProtoKeySerialization serialized =
-            registry.serializeKey(key, ProtoKeySerialization.class, InsecureSecretKeyAccess.get());
+            registry.serializeKey(key, InsecureSecretKeyAccess.get());
         assertEqualWhenValueParsed(
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKey.parser(), serialized, serialization);
 
@@ -563,7 +578,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 /* idRequirement= */ null);
 
         ProtoKeySerialization serialized =
-            registry.serializeKey(key, ProtoKeySerialization.class, InsecureSecretKeyAccess.get());
+            registry.serializeKey(key, InsecureSecretKeyAccess.get());
         assertEqualWhenValueParsed(
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKey.parser(), serialized, serialization);
 
@@ -603,7 +618,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 /* idRequirement= */ null);
 
         ProtoKeySerialization serialized =
-            registry.serializeKey(key, ProtoKeySerialization.class, InsecureSecretKeyAccess.get());
+            registry.serializeKey(key, InsecureSecretKeyAccess.get());
         assertEqualWhenValueParsed(
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKey.parser(), serialized, serialization);
 
@@ -643,7 +658,7 @@ final class Sm4GcmHkdfStreamingProtoSerializationTest {
                 /* idRequirement= */ null);
 
         ProtoKeySerialization serialized =
-            registry.serializeKey(key, ProtoKeySerialization.class, InsecureSecretKeyAccess.get());
+            registry.serializeKey(key, InsecureSecretKeyAccess.get());
         assertEqualWhenValueParsed(
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKey.parser(), serialized, serialization);
 

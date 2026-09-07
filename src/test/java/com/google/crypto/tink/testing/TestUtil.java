@@ -674,7 +674,7 @@ public final class TestUtil {
    */
   @Deprecated
   public static void assertHmacKey(
-      com.google.crypto.tink.KeyTemplate keyTemplate, Key key) throws Exception {
+      com.google.crypto.tink.KeyTemplate keyTemplate, Keyset.Key key) throws Exception {
     KeyTemplate protoTemplate = KeyTemplateProtoConverter.toProto(keyTemplate);
 
     assertThat(key.getKeyId()).isGreaterThan(0);
@@ -700,7 +700,7 @@ public final class TestUtil {
   public static void assertKeyInfo(
       com.google.crypto.tink.KeyTemplate keyTemplate, KeysetInfo.KeyInfo keyInfo) throws Exception {
     assertThat(keyInfo.getKeyId()).isGreaterThan(0);
-    KeyTemplate protoTemplate =
+    com.google.crypto.tink.proto.KeyTemplate protoTemplate =
         KeyTemplateProtoConverter.toProto(keyTemplate);
     assertThat(keyInfo.getTypeUrl()).isEqualTo(protoTemplate.getTypeUrl());
     assertThat(keyInfo.getStatus()).isEqualTo(KeyStatusType.ENABLED);

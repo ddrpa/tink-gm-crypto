@@ -10,6 +10,7 @@ import com.google.crypto.tink.KeyTemplate;
 import com.google.crypto.tink.Parameters;
 import com.google.crypto.tink.SecretKeyAccess;
 import com.google.crypto.tink.config.internal.TinkFipsUtil;
+import com.google.crypto.tink.internal.KeyCreator;
 import com.google.crypto.tink.internal.KeyManagerRegistry;
 import com.google.crypto.tink.internal.LegacyKeyManagerImpl;
 import com.google.crypto.tink.internal.MutableKeyCreationRegistry;
@@ -45,7 +46,7 @@ public final class Sm4GcmKeyManager {
     private static final MutableKeyDerivationRegistry.InsecureKeyCreator<Sm4GcmParameters>
         KEY_DERIVER = Sm4GcmKeyManager::createSm4GcmKeyFromRandomness;
     @SuppressWarnings("InlineLambdaConstant") // We need a correct Object#equals in registration.
-    private static final MutableKeyCreationRegistry.KeyCreator<Sm4GcmParameters> KEY_CREATOR =
+    private static final KeyCreator<Sm4GcmParameters> KEY_CREATOR =
         Sm4GcmKeyManager::createSm4GcmKey;
     private static final TinkFipsUtil.AlgorithmFipsCompatibility FIPS =
         TinkFipsUtil.AlgorithmFipsCompatibility.ALGORITHM_REQUIRES_BORINGCRYPTO;

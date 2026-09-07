@@ -10,6 +10,7 @@ import com.google.crypto.tink.Parameters;
 import com.google.crypto.tink.SecretKeyAccess;
 import com.google.crypto.tink.StreamingAead;
 import com.google.crypto.tink.config.internal.TinkFipsUtil;
+import com.google.crypto.tink.internal.KeyCreator;
 import com.google.crypto.tink.internal.KeyManagerRegistry;
 import com.google.crypto.tink.internal.LegacyKeyManagerImpl;
 import com.google.crypto.tink.internal.MutableKeyCreationRegistry;
@@ -48,7 +49,7 @@ public final class Sm4GcmHkdfStreamingKeyManager {
             KeyMaterialType.SYMMETRIC,
             cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKey.parser());
     @SuppressWarnings("InlineLambdaConstant") // We need a correct Object#equals in registration.
-    private static final MutableKeyCreationRegistry.KeyCreator<Sm4GcmHkdfStreamingParameters>
+    private static final KeyCreator<Sm4GcmHkdfStreamingParameters>
         KEY_CREATOR = Sm4GcmHkdfStreamingKeyManager::creatSm4GcmHkdfStreamingKey;
     @SuppressWarnings("InlineLambdaConstant") // We need a correct Object#equals in registration.
     private static final MutableKeyDerivationRegistry.InsecureKeyCreator<

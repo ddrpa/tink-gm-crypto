@@ -18,8 +18,9 @@ package com.google.crypto.tink.internal.testing;
 
 import static com.google.common.truth.Truth.assertThat;
 
-import com.google.crypto.tink.internal.ProtoKeySerialization;
-import com.google.crypto.tink.internal.ProtoParametersSerialization;
+import com.google.crypto.tink.AccessesPartialKey;
+import com.google.crypto.tink.ProtoKeySerialization;
+import com.google.crypto.tink.ProtoParametersSerialization;
 import com.google.protobuf.ExtensionRegistryLite;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
@@ -40,21 +41,19 @@ public final class Asserts {
       Parser<? extends MessageLite> parser,
       ProtoParametersSerialization one,
       ProtoParametersSerialization two) {
-    assertThat(one.getKeyTemplate().getTypeUrl()).isEqualTo(two.getKeyTemplate().getTypeUrl());
-    assertThat(one.getKeyTemplate().getOutputPrefixType())
-        .isEqualTo(two.getKeyTemplate().getOutputPrefixType());
+    assertThat(one.getTypeUrl()).isEqualTo(two.getTypeUrl());
+    assertThat(one.getOutputPrefixType()).isEqualTo(two.getOutputPrefixType());
     try {
       MessageLite valueOne =
-          parser.parseFrom(
-              one.getKeyTemplate().getValue(), ExtensionRegistryLite.getEmptyRegistry());
+          parser.parseFrom(one.getValue(), ExtensionRegistryLite.getEmptyRegistry());
       MessageLite valueTwo =
-          parser.parseFrom(
-              two.getKeyTemplate().getValue(), ExtensionRegistryLite.getEmptyRegistry());
+          parser.parseFrom(two.getValue(), ExtensionRegistryLite.getEmptyRegistry());
       assertThat(valueOne).isEqualTo(valueTwo);
     } catch (InvalidProtocolBufferException e) {
       throw new AssertionError("Unable to parse value with given parser", e);
     }
   }
+
   /**
    * Throws an assertion error if two {@link ProtoParametersSerialization} objects are not equal.
    *
@@ -64,6 +63,7 @@ public final class Asserts {
    * <p>Equality of the protos is decided by message equality, see {@link
    * com.google.protobuf.Message#equals}.
    */
+  @AccessesPartialKey
   public static void assertEqualWhenValueParsed(
       Parser<? extends MessageLite> parser, ProtoKeySerialization one, ProtoKeySerialization two) {
     assertThat(one.getKeyMaterialType()).isEqualTo(two.getKeyMaterialType());

@@ -16,7 +16,7 @@
 
 package com.google.crypto.tink.internal.testing;
 
-import com.google.crypto.tink.internal.KeysetHandleInterface;
+import com.google.crypto.tink.KeysetHandleInterface;
 import com.google.crypto.tink.internal.MonitoringAnnotations;
 import com.google.crypto.tink.internal.MonitoringClient;
 import java.util.ArrayList;
@@ -210,6 +210,7 @@ public final class FakeMonitoringClient implements MonitoringClient {
       addLogFailureEntry(new LogFailureEntry(keysetInfo, annotations, primitive, api));
     }
 
+    @Override
     public void logKeyExport(int keyId) {
       if (!entries.containsKey(keyId)) {
         throw new IllegalStateException("keyId not found in keysetInfo: " + keyId);

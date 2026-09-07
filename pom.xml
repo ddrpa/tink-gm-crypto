@@ -6,7 +6,7 @@
 
   <groupId>cc.ddrpa.crypto</groupId>
   <artifactId>tink-gm-crypto</artifactId>
-  <version>1.17.0.0</version>
+  <version>1.23.0.0-SNAPSHOT</version>
   <name>${project.groupId}:${project.artifactId}</name>
   <description>Extension for Google Tink that provides China's State Cryptography Administration
     approved algorithms, currently including SM4-GCM for AEAD and SM4-GCM-HKDF for Streaming AEAD.
@@ -41,7 +41,7 @@
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <tink.version>1.17.0</tink.version>
+    <tink.version>1.23.0</tink.version>
     <bouncycastle.version>1.78.1</bouncycastle.version>
     <guava.version>33.3.1-jre</guava.version>
     <slf4j.version>2.0.17</slf4j.version>

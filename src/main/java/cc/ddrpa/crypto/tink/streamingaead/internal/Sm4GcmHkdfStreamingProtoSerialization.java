@@ -16,24 +16,21 @@
 
 package cc.ddrpa.crypto.tink.streamingaead.internal;
 
-import static com.google.crypto.tink.internal.Util.toBytesFromPrintableAscii;
-
 import cc.ddrpa.crypto.tink.streamingaead.Sm4GcmHkdfStreamingKey;
 import cc.ddrpa.crypto.tink.streamingaead.Sm4GcmHkdfStreamingParameters;
 import com.google.crypto.tink.AccessesPartialKey;
+import com.google.crypto.tink.ProtoKeySerialization;
+import com.google.crypto.tink.ProtoKeySerialization.KeyMaterialType;
+import com.google.crypto.tink.ProtoKeySerialization.OutputPrefixType;
+import com.google.crypto.tink.ProtoParametersSerialization;
 import com.google.crypto.tink.SecretKeyAccess;
 import com.google.crypto.tink.internal.KeyParser;
 import com.google.crypto.tink.internal.KeySerializer;
 import com.google.crypto.tink.internal.MutableSerializationRegistry;
 import com.google.crypto.tink.internal.ParametersParser;
 import com.google.crypto.tink.internal.ParametersSerializer;
-import com.google.crypto.tink.internal.ProtoKeySerialization;
-import com.google.crypto.tink.internal.ProtoParametersSerialization;
+import com.google.crypto.tink.internal.SerializationRegistry;
 import com.google.crypto.tink.proto.HashType;
-import com.google.crypto.tink.proto.KeyData.KeyMaterialType;
-import com.google.crypto.tink.proto.KeyTemplate;
-import com.google.crypto.tink.proto.OutputPrefixType;
-import com.google.crypto.tink.util.Bytes;
 import com.google.crypto.tink.util.SecretBytes;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.ExtensionRegistryLite;
@@ -49,20 +46,20 @@ import javax.annotation.Nullable;
 @SuppressWarnings("UnnecessarilyFullyQualified") // Fully specifying proto types is more readable
 public final class Sm4GcmHkdfStreamingProtoSerialization {
 
-    private static final String TYPE_URL = "type.googleapis.com/ddrpa.crypto.tink.Sm4GcmHkdfStreamingKey";
-    private static final Bytes TYPE_URL_BYTES = toBytesFromPrintableAscii(TYPE_URL);
-    private static final ParametersParser<ProtoParametersSerialization> PARAMETERS_PARSER = ParametersParser.create(
-        Sm4GcmHkdfStreamingProtoSerialization::parseParameters, TYPE_URL_BYTES,
-        ProtoParametersSerialization.class);
-    private static final KeyParser<ProtoKeySerialization> KEY_PARSER = KeyParser.create(
-        Sm4GcmHkdfStreamingProtoSerialization::parseKey, TYPE_URL_BYTES,
-        ProtoKeySerialization.class);
-    private static final ParametersSerializer<Sm4GcmHkdfStreamingParameters, ProtoParametersSerialization> PARAMETERS_SERIALIZER = ParametersSerializer.create(
-        Sm4GcmHkdfStreamingProtoSerialization::serializeParameters,
-        Sm4GcmHkdfStreamingParameters.class, ProtoParametersSerialization.class);
-    private static final KeySerializer<Sm4GcmHkdfStreamingKey, ProtoKeySerialization> KEY_SERIALIZER = KeySerializer.create(
-        Sm4GcmHkdfStreamingProtoSerialization::serializeKey, Sm4GcmHkdfStreamingKey.class,
-        ProtoKeySerialization.class);
+    private static final String TYPE_URL =
+        "type.googleapis.com/ddrpa.crypto.tink.Sm4GcmHkdfStreamingKey";
+
+    private static final ParametersSerializer<Sm4GcmHkdfStreamingParameters>
+        PARAMETERS_SERIALIZER = ParametersSerializer.create(
+            Sm4GcmHkdfStreamingProtoSerialization::serializeParameters,
+            Sm4GcmHkdfStreamingParameters.class);
+    private static final ParametersParser PARAMETERS_PARSER = ParametersParser.create(
+        Sm4GcmHkdfStreamingProtoSerialization::parseParameters, TYPE_URL);
+    private static final KeySerializer<Sm4GcmHkdfStreamingKey> KEY_SERIALIZER =
+        KeySerializer.create(
+            Sm4GcmHkdfStreamingProtoSerialization::serializeKey, Sm4GcmHkdfStreamingKey.class);
+    private static final KeyParser KEY_PARSER = KeyParser.create(
+        Sm4GcmHkdfStreamingProtoSerialization::parseKey, TYPE_URL);
 
     private Sm4GcmHkdfStreamingProtoSerialization() {
     }
@@ -106,10 +103,12 @@ public final class Sm4GcmHkdfStreamingProtoSerialization {
 
     private static ProtoParametersSerialization serializeParameters(
         Sm4GcmHkdfStreamingParameters parameters) throws GeneralSecurityException {
-        return ProtoParametersSerialization.create(KeyTemplate.newBuilder().setTypeUrl(TYPE_URL)
-            .setValue(cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
+        return ProtoParametersSerialization.create(
+            TYPE_URL,
+            OutputPrefixType.RAW,
+            cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.newBuilder()
                 .setKeySize(parameters.getKeySizeBytes()).setParams(toProtoParams(parameters))
-                .build().toByteString()).setOutputPrefixType(OutputPrefixType.RAW).build());
+                .build().toByteString());
     }
 
     private static ProtoKeySerialization serializeKey(Sm4GcmHkdfStreamingKey key,
@@ -135,15 +134,15 @@ public final class Sm4GcmHkdfStreamingProtoSerialization {
 
     private static Sm4GcmHkdfStreamingParameters parseParameters(
         ProtoParametersSerialization serialization) throws GeneralSecurityException {
-        if (!serialization.getKeyTemplate().getTypeUrl().equals(TYPE_URL)) {
+        if (!serialization.getTypeUrl().equals(TYPE_URL)) {
             throw new IllegalArgumentException(
                 "Wrong type URL in call to Sm4GcmHkdfStreamingParameters.parseParameters: "
-                    + serialization.getKeyTemplate().getTypeUrl());
+                    + serialization.getTypeUrl());
         }
         cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat format;
         try {
             format = cc.ddrpa.crypto.tink.proto.Sm4GcmHkdfStreamingKeyFormat.parseFrom(
-                serialization.getKeyTemplate().getValue(),
+                serialization.getValue(),
                 ExtensionRegistryLite.getEmptyRegistry());
         } catch (InvalidProtocolBufferException e) {
             throw new GeneralSecurityException("Parsing Sm4GcmHkdfStreamingParameters failed: ", e);
@@ -187,5 +186,13 @@ public final class Sm4GcmHkdfStreamingProtoSerialization {
         registry.registerParametersParser(PARAMETERS_PARSER);
         registry.registerKeySerializer(KEY_SERIALIZER);
         registry.registerKeyParser(KEY_PARSER);
+    }
+
+    public static void register(SerializationRegistry.Builder registryBuilder)
+        throws GeneralSecurityException {
+        registryBuilder.registerParametersSerializer(PARAMETERS_SERIALIZER);
+        registryBuilder.registerParametersParser(PARAMETERS_PARSER);
+        registryBuilder.registerKeySerializer(KEY_SERIALIZER);
+        registryBuilder.registerKeyParser(KEY_PARSER);
     }
 }
