@@ -34,15 +34,79 @@ Sm4GcmHkdfStreamingKeyManager.register(true);
 
 参考 `src/test/java/cc/ddrpa/playground/UseStreamingAEAD.java` 使用。
 
+## 数字签名（SM2）
+
+参照 ECDSA 实现了 SM2 数字签名（GB/T 32918.2-2016，SM3，`sm2p256v1` 曲线，用户标识 IDA 固定使用
+标准默认值 `1234567812345678`），签名值为定长 64 字节的 r ‖ s。密钥类型为
+`type.googleapis.com/ddrpa.crypto.tink.Sm2SignaturePrivateKey` / `Sm2SignaturePublicKey`，
+具名参数 `SM2_SIGN`（TINK 前缀）与 `SM2_SIGN_RAW`（无前缀，纯 64 字节签名，可与其他实现互操作）。
+
+```java
+// SignatureConfig.register() 注册 Tink 的签名 wrapper（PublicKeySign/PublicKeyVerify）
+SignatureConfig.register();
+Sm2SignKeyManager.registerPair(true);
+```
+
+参考 `src/test/java/cc/ddrpa/playground/CreateSM2Keysets.java` 创建签名密钥集与可分发的公钥密钥集，
+参考 `src/test/java/cc/ddrpa/playground/UseSM2Signature.java` 使用。
+
+## 公钥加密：标准 SM2
+
+按 GB/T 32918.4-2016 实现标准 SM2 公钥加密，密文布局为 C1 ‖ C3 ‖ C2（C1 为 65 字节非压缩点），
+以 Tink 的 HybridEncrypt / HybridDecrypt 原语提供，密钥类型为
+`type.googleapis.com/ddrpa.crypto.tink.Sm2EncryptionPrivateKey` / `Sm2EncryptionPublicKey`，
+具名参数 `SM2_ENCRYPTION`（TINK 前缀）与 `SM2_ENCRYPTION_RAW`（无前缀，密文可与 GmSSL、OpenSSL
+等其他国密实现互操作）。
+
+标准 SM2 算法没有关联数据槽位，因此 **contextInfo 必须为 null 或空**，传入非空值会直接报错。
+
+```java
+HybridEncryptWrapper.register();
+HybridDecryptWrapper.register();
+Sm2EncryptionKeyManager.registerPair(true);
+```
+
+参考 `src/test/java/cc/ddrpa/playground/CreateSM2Keysets.java` 与
+`src/test/java/cc/ddrpa/playground/UseSM2Encryption.java`。
+
+## 公钥加密：SM2-KEM + SM4-GCM 混合
+
+在 SM2 曲线上提供 KEM + DEM 混合加密：加密方生成临时密钥对，以 SM2-KDF（SM3）从共享点
+(x2 ‖ y2) 派生 SM4-GCM 数据密钥，`contextInfo` 作为 SM4-GCM 的关联数据被**完整认证**
+（解密时必须传入相同的 contextInfo）。密钥类型为
+`type.googleapis.com/ddrpa.crypto.tink.Sm2HybridPrivateKey` / `Sm2HybridPublicKey`，
+具名参数 `SM2_HYBRID`（TINK 前缀）与 `SM2_HYBRID_RAW`（无前缀）。
+
+该实现密文格式（C1 ‖ nonce ‖ SM4-GCM）并非国标 SM2 密文格式，不与外部国密实现互操作；
+需要标准格式时请使用上面的“标准 SM2”实现。
+
+```java
+HybridEncryptWrapper.register();
+HybridDecryptWrapper.register();
+Sm2HybridKeyManager.registerPair(true);
+```
+
+参考 `src/test/java/cc/ddrpa/playground/CreateSM2Keysets.java` 与
+`src/test/java/cc/ddrpa/playground/UseSM2Encryption.java`。
+
+> 说明：以上 SM2 实现基于 Bouncy Castle，注册时若处于 Tink FIPS 模式（无 BoringCrypto）会被拒绝；
+> 私钥与公钥分别使用私钥/公钥密钥集管理，可通过 `KeysetHandle#getPublicKeysetHandle()` 导出公钥密钥集
+> 分发给验证方/加密方（RAW 互操作请使用 NO_PREFIX 变体并自行剥离前缀规则，见各节说明）。
+
 # 计划添加
 
-- SM2（椭圆曲线数字签名算法与公钥加密）支持
+- PEM / SPKI 公钥导入（仅数字签名）：参照 Tink `SignaturePemKeysetReader` 的机制，按 SM2 曲线/算法
+  OID（1.2.156.10197.1.301 / 1.2.156.10197.1.501）自研读取 PEM 公钥并转换为 SM2 签名 keyset；
+  不做 X.509 证书导出（证书属 PKI/CA 层，超出 Tink 模型）
+- SM3 以 Tink 原语形态提供的可行性评估（例如 HMAC-SM3 映射到 Mac 原语；Tink 不提供裸摘要原语）
+- 为 SM2 / SM4 模块接入 Tink keyset 监控（MonitoringClient，仓库测试支持类已随 v1.23.0 同步）
 
 # 验证对新版 Tink 的适配
 
 pom.xml 中的 `tink.version` 属性声明了所依赖的 Tink 版本（默认 1.23.0）。Tink 升级后可用下面的方式快速验证本库是否仍然适配：
 
-1. 运行当前默认版本的全部单元测试（108 个用例，覆盖密钥/参数序列化、密钥模板与 KeysetHandle 生成、加解密往返、非法输入拒绝等）：
+1. 运行当前默认版本的全部单元测试（299 个用例，覆盖密钥/参数序列化、密钥模板与 KeysetHandle 生成、
+   对称与非对称加解密往返、签名与验签、SM2 与 Bouncy Castle 交叉验证、非法输入拒绝等）：
 
    ```shell
    ./mvnw test

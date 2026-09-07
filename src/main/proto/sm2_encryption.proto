@@ -1,0 +1,25 @@
+syntax = "proto3";
+
+package google.crypto.tink;
+
+option java_package = "cc.ddrpa.crypto.tink.proto";
+option java_multiple_files = true;
+option objc_class_prefix = "TINKPB";
+
+message Sm2EncryptionKeyFormat {
+  uint32 version = 1;
+}
+
+// key_type: type.googleapis.com/ddrpa.crypto.tink.Sm2EncryptionPublicKey
+message Sm2EncryptionPublicKey {
+  uint32 version = 1;
+  bytes x = 2;
+  bytes y = 3;
+}
+
+// key_type: type.googleapis.com/ddrpa.crypto.tink.Sm2EncryptionPrivateKey
+message Sm2EncryptionPrivateKey {
+  uint32 version = 1;
+  Sm2EncryptionPublicKey public_key = 2;
+  bytes key_value = 3;
+}
