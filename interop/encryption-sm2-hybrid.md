@@ -1,7 +1,7 @@
 # 互操作：SM2-KEM + SM4-GCM 混合加密（本库自定义格式）
 
-对方系统（不使用 Google Tink）与本库 `SM2_HYBRID_RAW`（NO_PREFIX 变体）互通时的线格式、参数与
-对方侧参考实现说明。
+适用于：**加密方**持接收者的公钥 `Q` 加密，并把 contextInfo 作为关联数据认证；**解密方**持私钥
+`d` 解密（contextInfo 必须与加密时完全一致）。
 
 > ⚠️ **自定义格式**：本方案是“SM2 密钥封装 + SM4-GCM 数据封装”的混合加密，密文布局**不是**国标
 > SM2 密文格式、也非任何通用标准，**不能**与 OpenSSL/GmSSL 等实现对同一段数据直接互解。它解决
@@ -28,7 +28,7 @@
 
 （对应地：C1 长度 65 + nonce 12 = 77 字节固定头。）
 
-## 3. 对方侧参考实现
+## 3. 参考实现
 
 文件：`src/test/java/cc/ddrpa/interop/bc/Sm2KemSm4GcmHybrid.java`。核心用法：
 
@@ -50,7 +50,7 @@ provider）加密，AAD = contextInfo。解密时 C1 点必须做曲线上/非�
   Sm2HybridKeyManager.registerPair(true);`
 - 使用具名参数 `SM2_HYBRID_RAW` 生成密钥集，分发公钥 `Q`；`encrypt(plaintext, contextInfo)` /
   `decrypt(ciphertext, contextInfo)`。
-- 若使用 **TINK 前缀变体**（`SM2_HYBRID`），输出前带 `0x01 ‖ keyId`，对方需先剥离。
+- TINK 前缀变体（`SM2_HYBRID`）输出前带 `0x01 ‖ keyId`，收到该变体密文时需先剥离前缀。
 
 ## 5. 注意
 

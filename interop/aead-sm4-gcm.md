@@ -1,7 +1,6 @@
 # 互操作：SM4-GCM AEAD（对称加密）
 
-对方系统（不使用 Google Tink）与本库 `SM4_GCM_RAW`（NO_PREFIX 变体）互通时的线格式、参数与
-对方侧参考实现说明。适用于：双方共享一个 16 字节 SM4 密钥后，用 SM4-GCM 做带关联数据的对称加密。
+适用于：双方共享一个 16 字节 SM4 密钥后，用 SM4-GCM 做带关联数据的对称加密。
 
 ## 1. 参数（固定）
 
@@ -21,7 +20,7 @@
 
 与 BouncyCastle / OpenSSL / GmSSL 使用 SM4-GCM 时的通用布局一致。
 
-## 3. 对方侧参考实现
+## 3. 参考实现
 
 文件：`src/test/java/cc/ddrpa/interop/bc/Sm4GcmAead.java`（整包拷贝见
 [README](README.md)）。核心用法：
@@ -43,7 +42,7 @@ byte[] plaintext2 = Sm4GcmAead.decrypt(key, ciphertext, aad);    // tag 校验�
 - 生成密钥并注册：`AeadConfig.register(); Sm4GcmKeyManager.register(true);`
 - 使用具名参数 `SM4_GCM_RAW`（或 `Sm4GcmParameters.Variant.NO_PREFIX` 手动构建）生成密钥集；
   该变体加密输出即上述格式（无前缀）。
-- 若对方系统收到的是 **TINK 前缀变体**（默认 `SM4_GCM` 模板）产生的数据，需要按
+- 若系统收到的是 **TINK 前缀变体**（默认 `SM4_GCM` 模板）产生的数据，需要按
   `0x01 ‖ keyId(4 字节大端)` 剥离前缀后再处理（剥离与校验逻辑在仓库自检 `Sm4GcmInteropTest` 中
   有覆盖，见下文）。跨系统新对接建议直接使用 RAW 变体，避免前缀处理。
 

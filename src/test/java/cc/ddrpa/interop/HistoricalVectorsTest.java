@@ -31,8 +31,8 @@ import org.junit.jupiter.api.Test;
 
 /**
  * 历史向量回归：用<strong>对方角色（纯 BouncyCastle，不依赖 Tink）</strong>独立解密/验签
- * {@link InteropFixtures} 中固化的「Tink 侧历史输出」，防止加密侧与解密侧共享同一处实现错误；
- * 并顺带用 Tink 侧 RAW 原语重解一遍，确认向量与当前实现仍然一致。
+ * {@link InteropFixtures} 中固化的“Tink 侧历史输出”，防止加密侧与解密侧共享同一处实现错误；
+ * 再用 Tink 侧 RAW 原语重解一遍，回归校验向量与当前实现保持可互解。
  *
  * <p>密文本身是随机输出的一次性快照，因此只做“可被正确解密/验签”的断言。
  */

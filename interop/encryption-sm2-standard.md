@@ -1,8 +1,6 @@
 # 互操作：标准 SM2 公钥加密（GB/T 32918.4，C1C3C2）
 
-对方系统（不使用 Google Tink）与本库 `SM2_ENCRYPTION_RAW`（NO_PREFIX 变体）互通时的线格式、
-参数与对方侧参考实现说明。适用于：**加密方**持有接收者的公钥 `Q` 向其发送密文，**解密方**持有
-私钥 `d` 解密。
+适用于：**加密方**持有接收者的公钥 `Q` 向其发送密文，**解密方**持有私钥 `d` 解密。
 
 > 这是唯一一种“密文为国标格式、可与其他国密实现（BC/OpenSSL/GmSSL）直接互通”的公钥加密方案；
 > 需要携带关联数据时请改用本库的 SM2 混合加密（[encryption-sm2-hybrid.md](encryption-sm2-hybrid.md)，
@@ -27,7 +25,7 @@
 密文 = C1(65, 04‖X‖Y) ‖ C3(32) ‖ C2(明文长)         （总长 = 97 + 明文长）
 ```
 
-## 3. 对方侧参考实现
+## 3. 参考实现
 
 文件：`src/test/java/cc/ddrpa/interop/bc/Sm2StandardEncryption.java`。核心用法：
 
@@ -47,8 +45,8 @@ byte[] plaintext = Sm2StandardEncryption.decrypt(d32Bytes, ciphertext);
 - 注册：`HybridEncryptWrapper.register(); HybridDecryptWrapper.register();
   Sm2EncryptionKeyManager.registerPair(true);`
 - 使用具名参数 `SM2_ENCRYPTION_RAW` 生成密钥集；把公钥密钥集的 `Q` 发给加密方。
-- RAW 密文即标准 C1C3C2；若使用 **TINK 前缀变体**（`SM2_ENCRYPTION`），输出为
-  `0x01 ‖ keyId(4 字节大端) ‖ C1C3C2`，对方需先剥离前缀。
+- RAW 密文即标准 C1C3C2；TINK 前缀变体（`SM2_ENCRYPTION`）输出为
+  `0x01 ‖ keyId(4 字节大端) ‖ C1C3C2`，收到该变体密文时需先剥离前缀再解密。
 - contextInfo：调用 `encrypt/decrypt` 时传入 `null` 或空数组；传非空会报错。
 
 ## 5. 注意

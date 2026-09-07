@@ -1,12 +1,11 @@
 # 互操作：SM4-GCM-HKDF 流式 AEAD（本库自定义格式）
 
-对方系统（不使用 Google Tink）与本库 `SM4_GCM_HKDF_4KB` / `SM4_GCM_HKDF_1MB` 密钥互通时的
-线格式、参数与对方侧参考实现说明。适用于双方共享一个 16 字节初始密钥材料（IKM）后，对
-大文件/流式数据做“边读边加解密、支持随机读写位置解密”的对称加密。
+适用于：双方共享一个 16 字节初始密钥材料（IKM）后，对大文件/流式数据做“边读边加解密、支持随机
+读写位置解密”的对称加密。
 
 > ⚠️ **自定义格式**：该线格式不是国标，而是本库（及其对照实现的 Google Tink AES-GCM-HKDF 流式
-> 布局）自定义的分段格式，不能指望通用国密库直接支持。双方都实现本文档格式即可互通；仓库内
-> 参考实现（`Sm4GcmHkdfStreamingAead`）与 Tink 侧已做双向自动验证，建议对方直接采用该实现思路。
+> 布局）自定义的分段格式，不能指望通用国密库直接支持。双方都实现本文档格式即可互通；建议直接
+> 采用本仓库参考实现（`Sm4GcmHkdfStreamingAead`，它已与本库 Tink 侧做过双向自动验证）。
 > 另注意：**HKDF 使用 HMAC-SHA256（不是 SM3）**、段内密文为 SM4-GCM。
 
 ## 1. 参数
@@ -38,7 +37,7 @@ segment_i 的 nonce(12) = noncePrefix ‖ u32be(i) ‖ last      # last=1 仅最
   读到文件尾的那一段即最后一段（可能更短，last=1）→ 逐段 SM4-GCM 解密并校验 tag。
 - 每份密文使用随机 salt 与随机 noncePrefix（各一次），因此同一明文多次加密结果不同。
 
-## 3. 对方侧参考实现
+## 3. 参考实现
 
 文件：`src/test/java/cc/ddrpa/interop/bc/Sm4GcmHkdfStreamingAead.java`。核心用法：
 
@@ -62,8 +61,8 @@ provider；nonce 构造 `prefix(7) ‖ u32be(段号) ‖ last`；段缓冲一次
 
 - 注册：`StreamingAeadConfig.register(); Sm4GcmHkdfStreamingKeyManager.register(true);`
 - 具名参数：`SM4_GCM_HKDF_4KB`、`SM4_GCM_HKDF_1MB`（只有这两档密文段大小；密钥 16 字节）。
-- 流式 AEAD 没有前缀概念，密文即 §2 布局。Tink 侧通过 `newEncryptingStream/…Channel` 加密、
-  `newDecryptingStream/…Channel` 解密，AAD 参数需与对方一致。
+- 流式 AEAD 没有前缀概念，密文即 §2 布局。本库（Tink）侧通过 `newEncryptingStream/…Channel` 加密、
+  `newDecryptingStream/…Channel` 解密，加密与解密必须使用相同的 AAD 参数。
 
 ## 5. 注意
 

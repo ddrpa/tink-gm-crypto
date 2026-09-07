@@ -1,7 +1,6 @@
 # 互操作：SM2 数字签名（GB/T 32918.2）
 
-对方系统（不使用 Google Tink）与本库 `SM2_SIGN_RAW`（NO_PREFIX 变体）互通时的线格式、参数与
-对方侧参考实现说明。适用于：**验签方**持有签名者的公钥（64 字节 `Q`）验证其签名；签名方持有私钥
+适用于：**验签方**持有签名者的公钥（64 字节 `Q`）验证其签名；**签名方**持有私钥
 （32 字节 `d`）。
 
 ## 1. 参数（固定）
@@ -21,15 +20,15 @@
 签名 = r(32) ‖ s(32)                      （64 字节）
 ```
 
-## 3. 对方侧参考实现
+## 3. 参考实现
 
 文件：`src/test/java/cc/ddrpa/interop/bc/Sm2Signature.java`。核心用法：
 
 ```java
-// 验签（对方通常是验签方，只需要公钥 Q）
+// 验签（只需要公钥 Q，64 字节）
 boolean ok = Sm2Signature.verify(Q64Bytes, signature64Bytes, messageBytes);
 
-// 签名（若对方是签名方，需要私钥 d）
+// 签名（需要私钥 d，32 字节）
 byte[] signature = Sm2Signature.sign(d32Bytes, messageBytes);
 ```
 
@@ -43,8 +42,8 @@ byte[] signature = Sm2Signature.sign(d32Bytes, messageBytes);
 - 使用具名参数 `SM2_SIGN_RAW` 生成私钥密钥集，把
   `getPublicKeysetHandle()`（公钥密钥集）发给验签方；验签方通过
   `src/test/java/cc/ddrpa/playground/ExportKeysForInterop.java` 或等价代码取出 64 字节 `Q`。
-- RAW 签名即 64 字节 `r‖s`；若使用的是 **TINK 前缀变体**（`SM2_SIGN`），输出为
-  `0x01 ‖ keyId(4 字节大端) ‖ 64 字节签名`，对方验签前需先剥离前缀并把 keyId 与本地密钥对应。
+- RAW 签名即 64 字节 `r‖s`；若收到的是 **TINK 前缀变体**（`SM2_SIGN`）产生的签名
+  （`0x01 ‖ keyId(4 字节大端) ‖ 64 字节签名`），需要先剥离前缀并把 keyId 与本地公钥对应后再验签。
 
 ## 5. 注意
 

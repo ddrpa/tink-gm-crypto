@@ -93,19 +93,17 @@ Sm2HybridKeyManager.registerPair(true);
 > 私钥与公钥分别使用私钥/公钥密钥集管理，可通过 `KeysetHandle#getPublicKeysetHandle()` 导出公钥密钥集
 > 分发给验证方/加密方（RAW 互操作请使用 NO_PREFIX 变体并自行剥离前缀规则，见各节说明）。
 
-# 面向不使用 Google Tink 的对方系统（跨系统互操作）
+# 非 Google Tink 系统互操作
 
-加解密通常发生在两个不同系统之间：本库一侧使用 Tink，对方系统开发人员往往不使用 Tink。为此
-仓库提供了独立的互操作资料与一套**对方侧参考实现**（Java + BouncyCastle，纯 BC/JDK、零 Tink
-依赖、可整包拷贝），涵盖全部已支持算法，并按互操作友好度分级：
+项目提供独立的互操作参考实现（Java + BouncyCastle，纯 BC/JDK），涵盖全部已支持算法，并按互操作友好度分级：
 
 - **可直接互操作**（国标/通用格式）：SM4-GCM（`SM4_GCM_RAW`）、SM2 签名（`SM2_SIGN_RAW`，
   64 字节 r‖s、默认用户标识）、标准 SM2 加密（`SM2_ENCRYPTION_RAW`，C1C3C2）；
 - **本库自定义格式**（按线格式文档实现即可互通）：SM4-GCM-HKDF 流式 AEAD、SM2-KEM+SM4-GCM 混合。
 
-仓库内自动测试对“Tink ⇄ 对方侧（纯 BC）”做双向自检并固化历史向量，确保示例真实可用。详见
-[interop/](interop/README.md)（密钥交换、各算法线格式与注意事项、对方代码拷贝与自检方法、
-导出裸密钥工具 `src/test/java/cc/ddrpa/playground/ExportKeysForInterop.java`）。
+仓库支持对“Tink ⇄ 纯 BC”做双向检测。详见
+[interop/](interop/README.md)，包含密钥交换、各算法线格式与注意事项、对方代码拷贝与自检方法、
+导出裸密钥工具 `src/test/java/cc/ddrpa/playground/ExportKeysForInterop.java`。
 
 # 计划添加
 
@@ -115,7 +113,7 @@ Sm2HybridKeyManager.registerPair(true);
 - SM3 以 Tink 原语形态提供的可行性评估（例如 HMAC-SM3 映射到 Mac 原语；Tink 不提供裸摘要原语）
 - 为 SM2 / SM4 模块接入 Tink keyset 监控（MonitoringClient，仓库测试支持类已随 v1.23.0 同步）
 
-# 验证对新版 Tink 的适配
+# Tink 版本适配验证
 
 pom.xml 中的 `tink.version` 属性声明了所依赖的 Tink 版本（默认 1.23.0）。Tink 升级后可用下面的方式快速验证本库是否仍然适配：
 
